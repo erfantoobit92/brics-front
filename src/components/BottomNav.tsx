@@ -7,6 +7,7 @@ const BottomNav = () => {
     { path: "/mine", label: "Mine" }, // لینک جدید
     { path: "/tasks", label: "Tasks" },
     { path: "/friends", label: "Friends" },
+    { path: "/change", label: "Convert" },
     { path: "/profile", label: "Profile" },
   ];
 

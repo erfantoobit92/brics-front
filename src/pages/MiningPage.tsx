@@ -2,12 +2,20 @@ import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./MiningPage.module.css";
 import {
-  FaBolt, FaCoins, FaArrowUp, FaServer, FaSpinner, FaGoogleWallet, FaShoppingCart, FaLock
+  FaBolt,
+  FaCoins,
+  FaArrowUp,
+  FaServer,
+  FaSpinner,
+  FaGoogleWallet,
+  FaShoppingCart,
+  FaLock,
 } from "react-icons/fa";
 import {
   Api_Claim_Rewards,
   Api_Get_Mining_Status,
   Api_Upgrade_Hardware,
+  Api_Buy_Hardware,
 } from "../api";
 
 interface CombinedHardware {
@@ -18,29 +26,29 @@ interface CombinedHardware {
   isOwned: boolean;
   currentMiningRatePerHour: number;
   nextLevelUpgradeCost?: number | null; // هزینه آپگرید (برای فعال‌ها)
-  buyCost?: number | null;              // هزینه خرید (برای قفل‌ها)
+  buyCost?: number | null; // هزینه خرید (برای قفل‌ها)
   isMaxLevel: boolean;
 }
 
 // ================= TYPE DEFINITIONS (با فیلدهای جدید) =================
-interface HardwareInfo {
-  id: number;
-  name: string;
-}
+// interface HardwareInfo {
+//   id: number;
+//   name: string;
+// }
 
-interface UserHardware {
-  id: number;
-  level: number;
-  hardware: HardwareInfo;
-  currentMiningRatePerHour: number;
-  nextLevelUpgradeCost: number | null;
-  isMaxLevel: boolean;
-}
+// interface UserHardware {
+//   id: number;
+//   level: number;
+//   hardware: HardwareInfo;
+//   currentMiningRatePerHour: number;
+//   nextLevelUpgradeCost: number | null;
+//   isMaxLevel: boolean;
+// }
 
 export interface MiningStatusData {
   unclaimedMiningReward: number;
   totalMiningRatePerHour: number;
-    hardwares: CombinedHardware[]; // <<-- استفاده از تایپ جدید
+  hardwares: CombinedHardware[]; // <<-- استفاده از تایپ جدید
   balance: number; // <<-- فیلد جدید اضافه شد
   bricsBalance: number; // <<-- فیلد جدید اضافه شد
 }
@@ -54,26 +62,44 @@ interface HardwareCardProps {
   buyingId: number | null;
 }
 
-const HardwareCard: React.FC<HardwareCardProps> = ({ hardware, onUpgrade, onBuy, upgradingId, buyingId }) => {
+const HardwareCard: React.FC<HardwareCardProps> = ({
+  hardware,
+  onUpgrade,
+  onBuy,
+  upgradingId,
+  buyingId,
+}) => {
   const isUpgrading = upgradingId === hardware.id;
   const isBuying = buyingId === hardware.hardwareId;
-  
-  const cardVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-  const cardClassName = `${styles.hardwareCard} ${!hardware.isOwned ? styles.lockedCard : ''}`;
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+  const cardClassName = `${styles.hardwareCard} ${
+    !hardware.isOwned ? styles.lockedCard : ""
+  }`;
 
   return (
     <motion.div className={cardClassName} variants={cardVariants}>
-      {!hardware.isOwned && <div className={styles.lockedOverlay}><FaLock size={24}/></div>}
+      {!hardware.isOwned && (
+        <div className={styles.lockedOverlay}>
+          <FaLock size={24} />
+        </div>
+      )}
       <FaServer size={40} className={styles.hardwareIcon} />
       <div className={styles.hardwareInfo}>
         <h3>
           {hardware.name} {hardware.isOwned && `- Lvl ${hardware.level}`}
         </h3>
         <p>
-          <FaBolt color="#f39c12" /> {hardware.isOwned ? `${hardware.currentMiningRatePerHour.toFixed(6)} / hour` : 'Inactive'}
+          <FaBolt color="#f39c12" />{" "}
+          {hardware.isOwned
+            ? `${hardware.currentMiningRatePerHour.toFixed(6)} / hour`
+            : "Inactive"}
         </p>
       </div>
-      
+
       {hardware.isOwned ? (
         // --- دکمه آپگرید برای سخت‌افزار فعال
         <motion.button
@@ -83,9 +109,15 @@ const HardwareCard: React.FC<HardwareCardProps> = ({ hardware, onUpgrade, onBuy,
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          {isUpgrading ? (<FaSpinner className={styles.spinner} />) 
-          : hardware.isMaxLevel ? ('MAX Level') 
-          : (<><FaArrowUp /> Upgrade for {hardware.nextLevelUpgradeCost}</>)}
+          {isUpgrading ? (
+            <FaSpinner className={styles.spinner} />
+          ) : hardware.isMaxLevel ? (
+            "MAX Level"
+          ) : (
+            <>
+              <FaArrowUp /> Upgrade for {hardware.nextLevelUpgradeCost}
+            </>
+          )}
         </motion.button>
       ) : (
         // --- دکمه خرید برای سخت‌افزار قفل
@@ -96,14 +128,18 @@ const HardwareCard: React.FC<HardwareCardProps> = ({ hardware, onUpgrade, onBuy,
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          {isBuying ? (<FaSpinner className={styles.spinner} />) 
-          : (<><FaShoppingCart /> Buy for {hardware.buyCost}</>)}
+          {isBuying ? (
+            <FaSpinner className={styles.spinner} />
+          ) : (
+            <>
+              <FaShoppingCart /> Buy for {hardware.buyCost}
+            </>
+          )}
         </motion.button>
       )}
     </motion.div>
   );
 };
-
 
 // ================= MAIN MINING PAGE COMPONENT =================
 const MiningPage: React.FC = () => {
@@ -175,17 +211,16 @@ const MiningPage: React.FC = () => {
     }
   };
 
-    const handleBuy = async (hardwareId: number): Promise<void> => {
-      setBuyingId(hardwareId);
-      try {
-        //   await Api_Buy_Hardware(hardwareId); // <<-- این API رو بعداً پیاده‌سازی می‌کنیم
-          alert(`درحال حاضر امکان خرید وجود ندارد. API خرید باید پیاده سازی شود.`);
-          await fetchData();
-      } catch (err: any) {
-          alert(err.response?.data?.message || 'Buy failed!');
-      } finally {
-          setBuyingId(null);
-      }
+  const handleBuy = async (hardwareId: number): Promise<void> => {
+    setBuyingId(hardwareId);
+    try {
+      await Api_Buy_Hardware(hardwareId); // <<-- فراخوانی API واقعی
+      await fetchData(); // رفرش کامل صفحه بعد از خرید موفق
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Buy failed!");
+    } finally {
+      setBuyingId(null);
+    }
   };
 
   if (loading) {
@@ -259,7 +294,7 @@ const MiningPage: React.FC = () => {
         <strong>{Math.floor(data.balance)}</strong>
       </div>
 
-     <div className={styles.hardwareSection}>
+      <div className={styles.hardwareSection}>
         <h2>Mining Rigs</h2>
         <motion.div
           className={styles.hardwareList}
@@ -270,15 +305,15 @@ const MiningPage: React.FC = () => {
           {data.hardwares
             .sort((a, b) => (a.isOwned === b.isOwned ? 0 : a.isOwned ? -1 : 1)) // <<-- همیشه فعال‌ها اول
             .map((hw) => (
-            <HardwareCard
-              key={hw.hardwareId}
-              hardware={hw}
-              onUpgrade={handleUpgrade}
-              onBuy={handleBuy}
-              upgradingId={upgradingId}
-              buyingId={buyingId}
-            />
-          ))}
+              <HardwareCard
+                key={hw.hardwareId}
+                hardware={hw}
+                onUpgrade={handleUpgrade}
+                onBuy={handleBuy}
+                upgradingId={upgradingId}
+                buyingId={buyingId}
+              />
+            ))}
         </motion.div>
       </div>
     </motion.div>

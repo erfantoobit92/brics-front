@@ -8,6 +8,7 @@ interface UserProfile {
   username: string;
   firstName: string;
   balance: string; // چون bigint هست، معمولاً به صورت string میاد
+  bricsBalance: number; // چون bigint هست، معمولاً به صورت string میاد
   photoUrl?: string; // photoUrl رو به اینترفیس اضافه کن
 }
 
@@ -20,7 +21,7 @@ const ProfilePage = () => {
     const fetchProfile = async () => {
       if (!token) return;
       try {
-        const data = await Api_Get_Profile(token);
+        const data = await Api_Get_Profile();
         setProfile(data);
       } catch (error) {
         // اگر توکن نامعتبر بود، کاربر رو لاگ‌اوت کن
@@ -85,9 +86,17 @@ const ProfilePage = () => {
           <span className="font-semibold">{profile.telegramId}</span>
         </div>
         <div className="flex justify-between items-center text-xl">
-          <span className="text-gray-400">Balance:</span>
+          <span className="text-gray-400">Coin Balance:</span>
           <span className="font-bold text-green-400">
             {Number(profile.balance).toLocaleString()}
+          </span>
+        </div>
+        <div className="flex justify-between items-center text-xl">
+          <span className="text-gray-400">Brics Balance :</span>
+          <span className="font-bold text-yellow-400">
+            {Number(profile.bricsBalance).toLocaleString(undefined, {
+              maximumFractionDigits: 6,
+            })}
           </span>
         </div>
       </div>

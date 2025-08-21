@@ -15,3 +15,29 @@ body {
 * {
   -webkit-tap-highlight-color: transparent;
 }
+
+/* انیمیشن اسپینر */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+.loadingContainer, .errorContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.errorContainer {
+    color: #e74c3c;
+}

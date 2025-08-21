@@ -64,3 +64,21 @@ export const Api_Claim_Rewards = (): Promise<AxiosResponse<{ newBricsBalance: nu
 export const Api_Upgrade_Hardware = (userHardwareId: number): Promise<AxiosResponse<MiningStatusData>> => {
   return Axios_Api.post(`/mining/upgrade/${userHardwareId}`);
 };
+
+export const Api_Buy_Hardware = (hardwareId: number) => {
+  // این تابع باید درخواست POST به endpoint جدید بفرسته
+  return Axios_Api.post(`/mining/buy/${hardwareId}`);
+};
+
+export enum ConversionDirection {
+  BALANCE_TO_BRICS = 'BALANCE_TO_BRICS',
+  BRICS_TO_BALANCE = 'BRICS_TO_BALANCE',
+}
+
+export const Api_Get_Exchange_Status = () => {
+  return Axios_Api.get('/exchange/status');
+};
+
+export const Api_Convert_Currency = (amount: number, direction: ConversionDirection) => {
+  return Axios_Api.post('/exchange/convert', { amount, direction });
+};

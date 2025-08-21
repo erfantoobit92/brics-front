@@ -9,6 +9,7 @@ import FriendsPage from "./pages/FriendsPage"; // ایمپورت صفحه جدی
 import "./index.css";
 import ProfilePage from "./pages/ProfilePage";
 import MiningPage from "./pages/MiningPage";
+import ExchangePage from "./pages/ExchangePage";
 
 function App() {
   const { isLoading, token } = useAppContext();
@@ -35,6 +36,7 @@ function App() {
             <Route path="/mine" element={<MiningPage />} />
             <Route path="/friends" element={<FriendsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/change" element={<ExchangePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
