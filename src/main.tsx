@@ -7,8 +7,8 @@ import { AppProvider } from "./context/AppContext.tsx";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     {/* Provider تلگرام حذف شد! AppProvider حالا بالاترین کامپوننت ماست */}
-    <AppProvider>
-      <App />
-    </AppProvider>
+      <AppProvider>
+        <App />
+      </AppProvider>
   </React.StrictMode>
 );

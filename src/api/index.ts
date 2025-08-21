@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Main_API_URL } from "../constants";
 
-export const api = axios.create({
+export const Axios_Api = axios.create({
   baseURL: Main_API_URL,
 });
 
@@ -11,7 +11,7 @@ export const Api_Login_With_Telegram = async (
 ) => {
   try {
     // ما یک آبجکت به بک‌اند می‌فرستیم
-    const response = await api.post("/auth/login", { initData, startParam });
+    const response = await Axios_Api.post("/auth/login", { initData, startParam });
     return response.data.access_token;
   } catch (error) {
     console.error("Authentication failed:", error);
@@ -21,7 +21,7 @@ export const Api_Login_With_Telegram = async (
 
 export const Api_Get_Profile = async (token: string) => {
   try {
-    const response = await api.get("/user/profile", {
+    const response = await Axios_Api.get("/user/profile", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -35,7 +35,7 @@ export const Api_Get_Profile = async (token: string) => {
 
 export const Api_FetchFriends = async (token: string) => {
   try {
-    const response = await api.get("/user/referrals", {
+    const response = await Axios_Api.get("/user/referrals", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
