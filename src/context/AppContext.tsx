@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
-// ایمپورت‌های صحیح بر اساس API موجود
-import { useRawInitData, useLaunchParams } from "@telegram-apps/sdk-react";
-import { loginWithTelegram } from "../api";
+
+// import { useRawInitData, useLaunchParams } from "@telegram-apps/sdk-react";
+import { Api_Login_With_Telegram } from "../api";
 import type { User } from "@telegram-apps/sdk";
 
 interface AppContextType {
@@ -44,7 +44,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (initDataString && !token) {
         try {
           // 3. هر دو مقدار رو به تابع API پاس میدیم
-          const authToken = await loginWithTelegram(
+          const authToken = await Api_Login_With_Telegram(
             initDataString,
             startParamString as string | undefined
           );
@@ -76,6 +76,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       "https://t.me/i/userpic/320/7tWn0s-hZyG0iTyg6GMpa5IEssrAOi1nqEyAi1VJe84.svg",
     username: "Erfun_ Hz",
   };
+  
   // const telegramUser = launchParams.tgWebAppData?.user;
   const value = { token, isLoading, telegramUser };
 

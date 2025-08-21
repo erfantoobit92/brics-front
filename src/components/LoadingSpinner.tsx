@@ -1,4 +1,3 @@
-
 const LoadingSpinner = () => {
   return (
     <div className="flex justify-center items-center h-screen w-full bg-gray-900">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAppContext } from "../context/AppContext";
-import { getProfile } from "../api";
+import { Api_Get_Profile } from "../api";
 
 interface UserProfile {
   id: number;
@@ -20,7 +20,7 @@ const ProfilePage = () => {
     const fetchProfile = async () => {
       if (!token) return;
       try {
-        const data = await getProfile(token);
+        const data = await Api_Get_Profile(token);
         setProfile(data);
       } catch (error) {
         // اگر توکن نامعتبر بود، کاربر رو لاگ‌اوت کن

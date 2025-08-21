@@ -17,7 +17,7 @@ const TapPage = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
 
   // Game state
-  const [balance, setBalance] = useState<string>('0');
+  const [balance, setBalance] = useState<string>("0");
   const [energy, setEnergy] = useState<number>(1000);
   const [energyLimit, setEnergyLimit] = useState<number>(1000);
 
@@ -88,8 +88,9 @@ const TapPage = () => {
         <span className="text-gray-400 text-lg">
           {telegramUser?.first_name || "Player"}
         </span>
-         <h1 className="text-5xl font-bold">{Number(balance).toLocaleString()}</h1>
-
+        <h1 className="text-5xl font-bold">
+          {Number(balance).toLocaleString()}
+        </h1>
       </div>
 
       <div className="flex-grow flex items-center justify-center">
