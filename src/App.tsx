@@ -8,6 +8,7 @@ import FriendsPage from "./pages/FriendsPage"; // ایمپورت صفحه جدی
 
 import "./index.css";
 import ProfilePage from "./pages/ProfilePage";
+import MiningPage from "./pages/MiningPage";
 
 function App() {
   const { isLoading, token } = useAppContext();
@@ -31,6 +32,7 @@ function App() {
         <main className="flex-grow overflow-y-auto">
           <Routes>
             <Route path="/" element={<TapPage />} />
+            <Route path="/mine" element={<MiningPage />} />
             <Route path="/friends" element={<FriendsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="*" element={<NotFound />} />

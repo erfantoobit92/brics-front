@@ -49,7 +49,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             startParamString as string | undefined
           );
 
-          // localStorage.setItem("token", authToken);
+          localStorage.setItem("token", authToken);
           setToken(authToken);
         } catch (error) {
           console.error("Failed to login", error);
