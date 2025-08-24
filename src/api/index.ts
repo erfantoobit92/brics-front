@@ -6,17 +6,20 @@ export const Axios_Api = axios.create({
   baseURL: Main_API_URL,
 });
 
-Axios_Api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  console.log(token);
-  
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+Axios_Api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    console.log(token);
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+);
 
 export const Api_Login_With_Telegram = async (
   initData: string,
@@ -24,7 +27,10 @@ export const Api_Login_With_Telegram = async (
 ) => {
   try {
     // ما یک آبجکت به بک‌اند می‌فرستیم
-    const response = await Axios_Api.post("/auth/login", { initData, startParam });
+    const response = await Axios_Api.post("/auth/login", {
+      initData,
+      startParam,
+    });
     return response.data.access_token;
   } catch (error) {
     console.error("Authentication failed:", error);
@@ -52,16 +58,21 @@ export const Api_FetchFriends = async () => {
   }
 };
 
-
-export const Api_Get_Mining_Status = (): Promise<AxiosResponse<MiningStatusData>> => {
-  return Axios_Api.get('/mining/status');
+export const Api_Get_Mining_Status = (): Promise<
+  AxiosResponse<MiningStatusData>
+> => {
+  return Axios_Api.get("/mining/status");
 };
 
-export const Api_Claim_Rewards = (): Promise<AxiosResponse<{ newBricsBalance: number; claimedAmount: number }>> => {
-  return Axios_Api.post('/mining/claim');
+export const Api_Claim_Rewards = (): Promise<
+  AxiosResponse<{ newBricsBalance: number; claimedAmount: number }>
+> => {
+  return Axios_Api.post("/mining/claim");
 };
 
-export const Api_Upgrade_Hardware = (userHardwareId: number): Promise<AxiosResponse<MiningStatusData>> => {
+export const Api_Upgrade_Hardware = (
+  userHardwareId: number
+): Promise<AxiosResponse<MiningStatusData>> => {
   return Axios_Api.post(`/mining/upgrade/${userHardwareId}`);
 };
 
@@ -71,14 +82,29 @@ export const Api_Buy_Hardware = (hardwareId: number) => {
 };
 
 export enum ConversionDirection {
-  BALANCE_TO_BRICS = 'BALANCE_TO_BRICS',
-  BRICS_TO_BALANCE = 'BRICS_TO_BALANCE',
+  BALANCE_TO_BRICS = "BALANCE_TO_BRICS",
+  BRICS_TO_BALANCE = "BRICS_TO_BALANCE",
 }
 
 export const Api_Get_Exchange_Status = () => {
-  return Axios_Api.get('/exchange/status');
+  return Axios_Api.get("/exchange/status");
 };
 
-export const Api_Convert_Currency = (amount: number, direction: ConversionDirection) => {
-  return Axios_Api.post('/exchange/convert', { amount, direction });
+export const Api_Convert_Currency = (
+  amount: number,
+  direction: ConversionDirection
+) => {
+  return Axios_Api.post("/exchange/convert", { amount, direction });
+};
+
+export const Api_Get_Tasks = () => {
+  return Axios_Api.get("/tasks");
+};
+
+export const Api_Start_Task = (taskId: string) => {
+  return Axios_Api.post(`/tasks/start/${taskId}`);
+};
+
+export const Api_Claim_Task_Reward = (taskId: string) => {
+  return Axios_Api.post(`/tasks/claim/${taskId}`);
 };

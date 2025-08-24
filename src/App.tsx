@@ -10,6 +10,7 @@ import "./index.css";
 import ProfilePage from "./pages/ProfilePage";
 import MiningPage from "./pages/MiningPage";
 import ExchangePage from "./pages/ExchangePage";
+import TasksPage from "./pages/TasksPage";
 
 function App() {
   const { isLoading, token } = useAppContext();
@@ -19,7 +20,7 @@ function App() {
   }
 
   if (!token) {
-    // This could be a more user-friendly error page
+     // This could be a more user-friendly error page
     return (
       <div className="text-center mt-20">
         Authentication failed. Please restart the app.
@@ -35,6 +36,7 @@ function App() {
             <Route path="/" element={<TapPage />} />
             <Route path="/mine" element={<MiningPage />} />
             <Route path="/friends" element={<FriendsPage />} />
+            <Route path="/tasks" element={<TasksPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/change" element={<ExchangePage />} />
             <Route path="*" element={<NotFound />} />

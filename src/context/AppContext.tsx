@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 
-// import { useRawInitData, useLaunchParams } from "@telegram-apps/sdk-react";
 import { Api_Login_With_Telegram } from "../api";
-import type { User } from "@telegram-apps/sdk";
+import type { User,ShareStoryOptions,shareStory } from "@telegram-apps/sdk";
+import { useRawInitData, useLaunchParams } from "@telegram-apps/sdk-react";
 
 interface AppContextType {
   token: string | null;

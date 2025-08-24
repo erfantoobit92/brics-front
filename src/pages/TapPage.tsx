@@ -58,6 +58,7 @@ const TapPage = () => {
       newSocket.off("update_state");
       newSocket.disconnect();
     };
+
   }, [token]);
 
   const handleTap = (event: React.MouseEvent<HTMLButtonElement>) => {

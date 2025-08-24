@@ -6,6 +6,6 @@ export default defineConfig({
   server: {
     host: true, // اجازه دسترسی از بیرون
     port: 5173, // یا همون پورتی که می‌خوای
-    allowedHosts: ["4f006cdd0b4d.ngrok-free.app"],
+    allowedHosts: ["73accd94734f.ngrok-free.app"],
   },
 });
