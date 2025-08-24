@@ -1,14 +1,25 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 
-import { Api_Login_With_Telegram } from "../api";
-import type { User,ShareStoryOptions,shareStory } from "@telegram-apps/sdk";
-import { useRawInitData, useLaunchParams } from "@telegram-apps/sdk-react";
+import { Api_Get_Profile, Api_Login_With_Telegram } from "../api";
+import type { User } from "@telegram-apps/sdk";
+// import type { User, ShareStoryOptions, shareStory } from "@telegram-apps/sdk";
+// import { useRawInitData, useLaunchParams } from "@telegram-apps/sdk-react";
+// import type { AxiosError } from "axios";
 
 interface AppContextType {
   token: string | null;
   isLoading: boolean;
   telegramUser: User | undefined;
+  user: LoginUserInterface | null;
+  setUser: React.Dispatch<React.SetStateAction<LoginUserInterface | null>>;
+}
+
+interface LoginUserInterface {
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  walletAddress?: string;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -25,6 +36,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   );
   const [isLoading, setIsLoading] = useState(true);
 
+  const [user, setUser] = useState<LoginUserInterface | null>(null);
+
   // 3. استفاده از آبجکت گلوبال برای کنترل WebApp (روشی پایدار و همیشگی)
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
@@ -34,26 +47,41 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  // let isClearedLocalStorage = false;
   // Effect برای احراز هویت
   useEffect(() => {
     const authenticate = async () => {
+      // if (!isClearedLocalStorage) {
+      //   isClearedLocalStorage = true;
+      //   localStorage.removeItem("token");
+      // }
+
       const initDataString = rawInitData;
       // 2. پارامتر استارت رو از هوک دیگه می‌گیریم
       const startParamString = launchParams.ref;
       // حالا از initData که از هوک گرفتیم استفاده می‌کنیم
-      if (initDataString && !token) {
-        try {
-          // 3. هر دو مقدار رو به تابع API پاس میدیم
-          const authToken = await Api_Login_With_Telegram(
-            initDataString,
-            startParamString as string | undefined
-          );
+      if (initDataString) {
+        if (!token) {
+          try {
+            const { access_token, user } = await Api_Login_With_Telegram(
+              initDataString,
+              startParamString as string | undefined
+            );
+            console.log("000000000", user);
 
-          localStorage.setItem("token", authToken);
-          setToken(authToken);
-        } catch (error) {
-          console.error("Failed to login", error);
-        } finally {
+            localStorage.setItem("token", access_token);
+            setToken(access_token);
+            setUser(user);
+          } catch (error) {
+            console.error("Failed to login", error);
+          } finally {
+            setIsLoading(false);
+          }
+        } else if (user == null) {
+          console.log(user);
+          
+          const data = await Api_Get_Profile();
+          setUser(data);
           setIsLoading(false);
         }
       } else {
@@ -76,9 +104,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       "https://t.me/i/userpic/320/7tWn0s-hZyG0iTyg6GMpa5IEssrAOi1nqEyAi1VJe84.svg",
     username: "Erfun_ Hz",
   };
-  
+
   // const telegramUser = launchParams.tgWebAppData?.user;
-  const value = { token, isLoading, telegramUser };
+  const value = { token, isLoading, telegramUser, user, setUser };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

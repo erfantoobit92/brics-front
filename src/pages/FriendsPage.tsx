@@ -16,9 +16,8 @@ const FriendsPage = () => {
 
   useEffect(() => {
     const fetchFriends = async () => {
-      if (!token) return;
       try {
-        const response = await Api_FetchFriends(token);
+        const response = await Api_FetchFriends();
         setFriends(response);
       } catch (error) {
       } finally {

@@ -1,5 +1,6 @@
-// export const Main_API_URL = "https://brics-trade-back.loca.lt"; // آدرس بک‌اند شما
-export const Main_API_URL = "http://localhost:3000"; // آدرس بک‌اند شما
+export const Main_API_URL = "https://brics-trade-back-2.loca.lt";
+export const WEB_APP_URL = "https://jemjoo.erfuni.ir";
+
 export const Telegram_Bot_Url = "t.me/Bricstrade_Bot/Brics_Trade";
 export const Telegram_Bot_Username = "Bricstrade_Bot";
 

@@ -4,6 +4,12 @@ import type { MiningStatusData } from "../pages/MiningPage";
 
 export const Axios_Api = axios.create({
   baseURL: Main_API_URL,
+  headers: {
+    "bypass-tunnel-reminder": "191.96.122.47",
+    "x-lt-auth": "191.96.122.47",
+    // Accept: "*/*",
+    // Connection: "keep-alive",
+  },
 });
 
 Axios_Api.interceptors.request.use(
@@ -13,6 +19,7 @@ Axios_Api.interceptors.request.use(
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Accept = true;
     }
     return config;
   },
@@ -31,7 +38,7 @@ export const Api_Login_With_Telegram = async (
       initData,
       startParam,
     });
-    return response.data.access_token;
+    return response.data;
   } catch (error) {
     console.error("Authentication failed:", error);
     throw error;
@@ -81,10 +88,12 @@ export const Api_Buy_Hardware = (hardwareId: number) => {
   return Axios_Api.post(`/mining/buy/${hardwareId}`);
 };
 
-export enum ConversionDirection {
-  BALANCE_TO_BRICS = "BALANCE_TO_BRICS",
-  BRICS_TO_BALANCE = "BRICS_TO_BALANCE",
-}
+export const ConversionDirection = {
+  BALANCE_TO_BRICS: "BALANCE_TO_BRICS",
+  BRICS_TO_BALANCE: "BRICS_TO_BALANCE",
+} as const;
+
+export type ConversionDirection = (typeof ConversionDirection)[keyof typeof ConversionDirection];
 
 export const Api_Get_Exchange_Status = () => {
   return Axios_Api.get("/exchange/status");
@@ -107,4 +116,8 @@ export const Api_Start_Task = (taskId: string) => {
 
 export const Api_Claim_Task_Reward = (taskId: string) => {
   return Axios_Api.post(`/tasks/claim/${taskId}`);
+};
+
+export const Api_Connect_User_Wallet = (walletAddress: string) => {
+  return Axios_Api.post("/user/connect-wallet", { walletAddress });
 };

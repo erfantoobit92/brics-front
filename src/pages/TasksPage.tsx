@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import TaskItem from "../components/TaskItem";
 import { motion, AnimatePresence } from "framer-motion";
 import { ClipLoader } from "react-spinners"; // یا هر لودر دیگه‌ای
 import { Toaster } from "react-hot-toast";
 import { Api_Get_Tasks } from "../api";
+import { useTonWallet } from "@tonconnect/ui-react";
 
 // انیمیشن برای کل لیست
 const listVariants = {
@@ -20,6 +21,8 @@ const TasksPage = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+
 
   const fetchTasks = async () => {
     try {

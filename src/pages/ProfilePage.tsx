@@ -19,7 +19,6 @@ const ProfilePage = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!token) return;
       try {
         const data = await Api_Get_Profile();
         setProfile(data);
