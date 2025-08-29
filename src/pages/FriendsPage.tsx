@@ -27,9 +27,12 @@ const FriendsPage = () => {
     fetchFriends();
   }, [token]);
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(User_Referral_Link(telegramUser?.id ?? -1));
-    alert("Referral link copied!"); // یا یک نوتیفیکیشن بهتر نشون بده
+  const shareReferalLink = () => {
+      const referralLink = User_Referral_Link(telegramUser?.id ?? -1);
+  const shareText = `Join me on this bot: ${referralLink}`;
+
+  const href = `https://t.me/share?text=${encodeURIComponent(shareText)}`;
+  window.open(href, '_blank')
   };
 
   return (
@@ -45,8 +48,8 @@ const FriendsPage = () => {
             value={User_Referral_Link(telegramUser?.id ?? -1)}
             className="w-full bg-gray-700 p-2 rounded border-none text-gray-300"
           />
-          <button onClick={copyLink} className="bg-yellow-500 p-2 rounded">
-            Copy
+          <button onClick={shareReferalLink} className="bg-yellow-500 p-2 rounded">
+            Share
           </button>
         </div>
       </div>

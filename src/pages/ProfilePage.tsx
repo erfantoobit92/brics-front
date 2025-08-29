@@ -7,9 +7,10 @@ interface UserProfile {
   telegramId: number;
   username: string;
   firstName: string;
-  balance: string; // چون bigint هست، معمولاً به صورت string میاد
-  bricsBalance: number; // چون bigint هست، معمولاً به صورت string میاد
-  photoUrl?: string; // photoUrl رو به اینترفیس اضافه کن
+  balance: string;
+  bricsBalance: number;
+  walletAddress?: string;
+  photoUrl?: string;
 }
 
 const ProfilePage = () => {
@@ -23,7 +24,6 @@ const ProfilePage = () => {
         const data = await Api_Get_Profile();
         setProfile(data);
       } catch (error) {
-        // اگر توکن نامعتبر بود، کاربر رو لاگ‌اوت کن
         handleLogout();
       } finally {
         setLoading(false);
@@ -33,11 +33,8 @@ const ProfilePage = () => {
   }, [token]);
 
   const handleLogout = () => {
-    // توکن رو از حافظه پاک کن
-    localStorage.removeItem("token");
-    // صفحه رو ریلود کن تا AppContext وضعیت رو آپدیت کنه
-    window.location.reload();
-    // یا میتونی با استفاده از توابع context، وضعیت رو بدون ریلود تغییر بدی
+    localStorage.clear();
+    window.location.href = "/";
   };
 
   if (loading) {
@@ -96,6 +93,13 @@ const ProfilePage = () => {
             {Number(profile.bricsBalance).toLocaleString(undefined, {
               maximumFractionDigits: 6,
             })}
+          </span>
+        </div>
+
+        <div className="flex justify-between items-center text-xl">
+          <span className="text-gray-400">Wallet :</span>
+          <span className="font-bold text-yellow-400">
+            {profile.walletAddress ? "Connected" : "Not Connected"}
           </span>
         </div>
       </div>

@@ -224,7 +224,6 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
 
   const handleSendTransaction = async () => {
     if (!wallet) {
-      toast.error("Please connect your wallet first!");
       tonConnectUI.openModal();
       return;
     }
