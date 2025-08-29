@@ -5,8 +5,8 @@ import type { MiningStatusData } from "../pages/MiningPage";
 export const Axios_Api = axios.create({
   baseURL: Main_API_URL,
   headers: {
-    "bypass-tunnel-reminder": "191.96.122.47",
-    "x-lt-auth": "191.96.122.47",
+    "bypass-tunnel-reminder": "194.146.93.248",
+    "x-lt-auth": "194.146.93.248",
     // Accept: "*/*",
     // Connection: "keep-alive",
   },
