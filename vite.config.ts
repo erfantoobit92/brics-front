@@ -10,7 +10,7 @@ export default defineConfig({
       "ecf23a8256ea.ngrok-free.app",
       "brics-trade-back-2.loca.lt/",
       "brics-trade-front.loca.lt",
-      "9966001b3a98.ngrok-free.app",
+      "94ed5574100b.ngrok-free.app",
       "erfuni.ir",
       "jemjoo.erfuni.ir",
     ],

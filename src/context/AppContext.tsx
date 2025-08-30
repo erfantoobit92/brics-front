@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { Api_Get_Profile, Api_Login_With_Telegram } from "../api";
 import type { User, ShareStoryOptions, shareStory } from "@telegram-apps/sdk";
-import { useRawInitData, useLaunchParams } from "@telegram-apps/sdk-react";
+  import { useRawInitData, useLaunchParams } from "@telegram-apps/sdk-react";
 import type { AxiosError } from "axios";
 
 interface AppContextType {
@@ -45,7 +45,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const authenticate = async () => {
-      //   localStorage.removeItem("token");
+        // localStorage.clear();
 
       const initDataString = rawInitData;
       const startParamString = launchParams.ref;
@@ -60,6 +60,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             setToken(access_token);
             setUser(user);
           } catch (error) {
+            alert(JSON.stringify(error))
             console.error("Failed to login", error);
           } finally {
             setIsLoading(false);
@@ -82,6 +83,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [rawInitData, launchParams, token]);
 
   const telegramUser = launchParams.tgWebAppData?.user;
+  
   const value = { token, isLoading, telegramUser, user, setUser };
   
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -15,12 +15,20 @@ import { FaTelegramPlane, FaBone, FaTelegram } from "react-icons/fa"; // مثا�
 import { ClipLoader } from "react-spinners";
 import {
   Api_Claim_Task_Reward,
+  Api_Complete_Post_Story_Task,
   Api_Connect_User_Wallet,
   Api_Start_Task,
 } from "../api";
 import { TonConnectButton } from "@tonconnect/ui-react";
 import { useAppContext } from "../context/AppContext";
 import { useTonWallet, useTonConnectUI } from "@tonconnect/ui-react"; // useTonConnectUI رو اضافه کن
+import {
+  type User,
+  type ShareStoryOptions,
+  shareStory,
+  init,
+} from "@telegram-apps/sdk-react";
+import { Telegram_Bot_Username } from "../constants";
 
 const itemVariants = {
   hidden: { y: 20, opacity: 0 },
@@ -117,14 +125,21 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
       // اگر تسک در حالت PENDING باشه
       if (task.status === "PENDING") {
         // تسک‌هایی که فقط نیاز به "چک کردن" دارن و "شروع" ندارن
-        if (
-          task.type === "ADD_LOGO_TO_PROFILE_NAME" ||
-          task.type === "JOIN_TELEGRAM_CHANNEL"
-        ) {
+        if (task.type === "ADD_LOGO_TO_PROFILE_NAME") {
           await Api_Claim_Task_Reward(task.id);
           toast.success(`+${task.rewardCoin.toLocaleString()}! Task Verified.`);
           //   updateUserBalance(response.data.newBalance);
           onTaskUpdate();
+          return;
+        }
+
+        if (task.type === "JOIN_TELEGRAM_CHANNEL") {
+          window.open(
+            `https://t.me/${(task.metadata.channelId as String).slice(
+              1,
+              task.metadata.channelId.length
+            )}`
+          );
           return;
         }
 
@@ -171,16 +186,18 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
 
     // 1. اول چک می‌کنیم که آیا کیف پول متصل (مثل متامسک) در مرورگر وجود داره یا نه
     if (typeof window.ethereum === "undefined") {
-      // ساختن deeplink
-      window.open(
-        // `https://metamask.app.link/add-token?address=${tokenAddress}&symbol=${tokenSymbol}&decimals=${tokenDecimals}`,
-        // `trust://asset/bsc-0x278a5B50c34506bc8e15C8567136292c30C92CD1`,
-        // `https://link.trustwallet.com/open_url?coin_id=60&url=https://bscscan.com/token/0x278a5B50c34506bc8e15C8567136292c30C92CD1`,
-        // `https://metamask.app.link/`,
-        // `https://link.trustwallet.com/asset/bsc-${tokenAddress}`,
-        "https://link.trustwallet.com/add_asset?asset=c60_t0x278a5B50c34506bc8e15C8567136292c30C92CD1",
-        "_blank"
-      );
+      navigator.clipboard
+        .writeText(tokenAddress)
+        .then(() => {
+          window.open(
+            `https://link.trustwallet.com/add_asset?asset=c56_t${tokenAddress}`,
+            "_blank"
+          );
+        })
+        .catch((err) => {
+          console.log("Failed to copy text:", err);
+        });
+
       return;
     }
 
@@ -270,6 +287,78 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
     }
   };
 
+  const handleJoinTelegramClaimReward = async () => {
+    setIsProcessing(true);
+    alert("ss");
+    await Api_Claim_Task_Reward(task.id);
+    setIsProcessing(false);
+    toast.success(`+${task.rewardCoin.toLocaleString()}! Task Verified.`);
+    //   updateUserBalance(response.data.newBalance);
+    onTaskUpdate();
+  };
+
+  const handlePostStory = async () => {
+    try {
+      setIsProcessing(true);
+      await Api_Start_Task(task.id);
+      onTaskUpdate();
+      setIsProcessing(false);
+
+      init();
+      shareStory(task.metadata.imageUrl, {
+        text: `${task.metadata.caption}\n\nJoin us: t.me/${Telegram_Bot_Username} @${Telegram_Bot_Username}`,
+        widgetLink: {
+          url: `https://t.me/${Telegram_Bot_Username}`,
+          name: "@BricsTrade",
+        },
+      });
+    } catch (error) {
+      alert(error);
+    }
+
+    // setIsProcessing(true);
+
+    // 2. اطلاعات استوری رو از metadata تسک آماده می‌کنیم
+    // const storyParams = {
+    //   story_type: "photo", // یا 'video'
+    //   // URL عکس باید عمومی و قابل دسترس باشه (مثلاً روی CDN یا هاست خودتون)
+    //   blob: await fetch(task.metadata.imageUrl).then((res) => res.blob()),
+    //   caption: `${task.metadata.caption}\n\nJoin us: t.me/your_bot_name`,
+    //   attachment: {
+    //     type: "bot",
+    //     url: `t.me/your_bot_name?start=story_${task.id}`, // لینک به ربات شما
+    //   },
+    // };
+
+    // 3. صفحه ساخت استوری رو به کاربر نشون میدیم
+    // tg.showStoryBox(storyParams, async (result: any) => {
+    //   // این callback بعد از تعامل کاربر اجرا میشه
+    //   if (result.ok === true) {
+    //     // کاربر استوری رو با موفقیت پست کرد!
+    //     toast.success("Story posted! Claiming your reward...");
+
+    //     try {
+    //       // 4. حالا endpoint اختصاصی بک‌اند رو صدا می‌زنیم
+    //       const response = await Api_Complete_Post_Story_Task();
+    //       toast.success(
+    //         `+${task.rewardCoin.toLocaleString()}! Reward claimed!`
+    //       );
+    //       onTaskUpdate(); // لیست تسک‌ها رو رفرش کن
+    //     } catch (error: any) {
+    //       toast.error(
+    //         error.response?.data?.message || "Failed to claim reward."
+    //       );
+    //     } finally {
+    //       setIsProcessing(false);
+    //     }
+    //   } else {
+    //     // کاربر پنجره رو بست یا کنسل کرد
+    //     toast.error("You cancelled posting the story.");
+    //     setIsProcessing(false);
+    //   }
+    // });
+  };
+
   const renderActionButton = () => {
     if (task.type === "CONNECT_WALLET") {
       // اگر کیف پول وصل باشه، تسک رو تکمیل شده نشون میدیم
@@ -291,6 +380,19 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
           <FiCheckCircle size={20} />
           <span>Done</span>
         </div>
+      );
+    }
+
+    if (task.type === "POST_TELEGRAM_STORY") {
+      return (
+        <motion.button
+          // ... (انیمیشن‌های دکمه)
+          className="bg-pink-500 hover:bg-pink-600 text-white ..."
+          onClick={handlePostStory}
+          disabled={isProcessing}
+        >
+          {isProcessing ? "Waiting..." : "Post Story"}
+        </motion.button>
       );
     }
 
@@ -356,7 +458,6 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
 
     if (task.status === "PENDING") {
       switch (task.type) {
-        case "JOIN_TELEGRAM_CHANNEL":
         case "ADD_LOGO_TO_PROFILE_NAME":
           buttonText = "Check";
           buttonClass = "bg-indigo-500 hover:bg-indigo-600";
@@ -373,15 +474,30 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
     }
 
     return (
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className={`text-white font-bold py-2 px-5 rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${buttonClass}`}
-        onClick={handleAction}
-        disabled={isProcessing}
-      >
-        {isProcessing ? <ClipLoader color="#fff" size={20} /> : buttonText}
-      </motion.button>
+      <div className="flex">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className={`text-white font-bold py-2 px-5 rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${buttonClass}`}
+          onClick={handleAction}
+          disabled={isProcessing}
+        >
+          {isProcessing ? <ClipLoader color="#fff" size={20} /> : buttonText}
+        </motion.button>
+        {task.type === "JOIN_TELEGRAM_CHANNEL" ? (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`text-white font-bold py-2 px-5 rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${buttonClass}`}
+            onClick={handleJoinTelegramClaimReward}
+            disabled={isProcessing}
+          >
+            {isProcessing ? <ClipLoader color="#fff" size={20} /> : "Check"}
+          </motion.button>
+        ) : (
+          <></>
+        )}
+      </div>
     );
   };
 

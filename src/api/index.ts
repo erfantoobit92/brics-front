@@ -5,8 +5,8 @@ import type { MiningStatusData } from "../pages/MiningPage";
 export const Axios_Api = axios.create({
   baseURL: Main_API_URL,
   headers: {
-    "bypass-tunnel-reminder": "194.146.93.248",
-    "x-lt-auth": "194.146.93.248",
+    "bypass-tunnel-reminder": "62.72.160.158",
+    "x-lt-auth": "62.72.160.158",
     // Accept: "*/*",
     // Connection: "keep-alive",
   },
@@ -120,4 +120,8 @@ export const Api_Claim_Task_Reward = (taskId: string) => {
 
 export const Api_Connect_User_Wallet = (walletAddress: string) => {
   return Axios_Api.post("/user/connect-wallet", { walletAddress });
+};
+
+export const Api_Complete_Post_Story_Task = () => {
+  return Axios_Api.post('/tasks/complete/post-story');
 };
