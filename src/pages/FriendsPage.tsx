@@ -28,11 +28,11 @@ const FriendsPage = () => {
   }, [token]);
 
   const shareReferalLink = () => {
-      const referralLink = User_Referral_Link(telegramUser?.id ?? -1);
-  const shareText = `Join me on this bot: ${referralLink}`;
+    const referralLink = User_Referral_Link(telegramUser?.id ?? -1);
+    const shareText = `Join me on this bot: ${referralLink}`;
 
-  const href = `https://t.me/share?text=${encodeURIComponent(shareText)}`;
-  window.open(href, '_blank')
+    const href = `https://t.me/share/url?text=${encodeURIComponent(shareText)}`;
+    window.open(href, "_blank");
   };
 
   return (
@@ -48,7 +48,10 @@ const FriendsPage = () => {
             value={User_Referral_Link(telegramUser?.id ?? -1)}
             className="w-full bg-gray-700 p-2 rounded border-none text-gray-300"
           />
-          <button onClick={shareReferalLink} className="bg-yellow-500 p-2 rounded">
+          <button
+            onClick={shareReferalLink}
+            className="bg-yellow-500 p-2 rounded"
+          >
             Share
           </button>
         </div>

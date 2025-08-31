@@ -15,19 +15,13 @@ import { FaTelegramPlane, FaBone, FaTelegram } from "react-icons/fa"; // مثا�
 import { ClipLoader } from "react-spinners";
 import {
   Api_Claim_Task_Reward,
-  Api_Complete_Post_Story_Task,
   Api_Connect_User_Wallet,
   Api_Start_Task,
 } from "../api";
 import { TonConnectButton } from "@tonconnect/ui-react";
 import { useAppContext } from "../context/AppContext";
 import { useTonWallet, useTonConnectUI } from "@tonconnect/ui-react"; // useTonConnectUI رو اضافه کن
-import {
-  type User,
-  type ShareStoryOptions,
-  shareStory,
-  init,
-} from "@telegram-apps/sdk-react";
+import { shareStory, init } from "@telegram-apps/sdk-react";
 import { Telegram_Bot_Username } from "../constants";
 
 const itemVariants = {
@@ -66,7 +60,7 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
   const { user, setUser } = useAppContext();
 
   const wallet = useTonWallet();
-  const [tonConnectUI, setOptions] = useTonConnectUI(); // هوک اصلی برای ارسال تراکنش
+  const [tonConnectUI] = useTonConnectUI(); // هوک اصلی برای ارسال تراکنش
 
   // این هوک به تغییرات اتصال کیف پول گوش میده
   useEffect(() => {
@@ -185,7 +179,7 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
     const tokenImage = task.metadata.tokenImage;
 
     // 1. اول چک می‌کنیم که آیا کیف پول متصل (مثل متامسک) در مرورگر وجود داره یا نه
-    if (typeof window.ethereum === "undefined") {
+    if (typeof (window as any).ethereum === "undefined") {
       navigator.clipboard
         .writeText(tokenAddress)
         .then(() => {
@@ -205,7 +199,7 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
 
     try {
       // 3. درخواست wallet_watchAsset رو به کیف پول ارسال کن
-      const wasAdded = await window.ethereum.request({
+      const wasAdded = await (window as any).ethereum.request({
         method: "wallet_watchAsset",
         params: {
           type: "ERC20", // برای توکن‌های BEP-20 هم از همین نوع استفاده میشه
@@ -261,7 +255,7 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
 
     try {
       // 2. پنجره تایید تراکنش رو در کیف پول کاربر باز کن
-      const result = await tonConnectUI.sendTransaction(transaction);
+      await tonConnectUI.sendTransaction(transaction);
 
       // 3. به کاربر اطلاع بده که تراکنش ارسال شده و باید صبر کنه
       toast.success(
@@ -289,21 +283,14 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
 
   const handleJoinTelegramClaimReward = async () => {
     setIsProcessing(true);
-    alert("ss");
     await Api_Claim_Task_Reward(task.id);
     setIsProcessing(false);
     toast.success(`+${task.rewardCoin.toLocaleString()}! Task Verified.`);
-    //   updateUserBalance(response.data.newBalance);
     onTaskUpdate();
   };
 
   const handlePostStory = async () => {
     try {
-      setIsProcessing(true);
-      await Api_Start_Task(task.id);
-      onTaskUpdate();
-      setIsProcessing(false);
-
       init();
       shareStory(task.metadata.imageUrl, {
         text: `${task.metadata.caption}\n\nJoin us: t.me/${Telegram_Bot_Username} @${Telegram_Bot_Username}`,
