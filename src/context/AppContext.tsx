@@ -83,7 +83,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [rawInitData, launchParams, token]);
 
   const telegramUser = launchParams.tgWebAppData?.user;
-  
   const value = { token, isLoading, telegramUser, user, setUser };
   
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -21,7 +21,7 @@ import {
 interface CombinedHardware {
   id: number | null; // id نمونه‌ی کاربر (اگر داشته باشد)
   hardwareId: number;
-  name: string;
+  name: any;
   level: number;
   isOwned: boolean;
   currentMiningRatePerHour: number;
@@ -90,7 +90,7 @@ const HardwareCard: React.FC<HardwareCardProps> = ({
       <FaServer size={40} className={styles.hardwareIcon} />
       <div className={styles.hardwareInfo}>
         <h3>
-          {hardware.name} {hardware.isOwned && `- Lvl ${hardware.level}`}
+          {hardware.name.en} {hardware.isOwned && `- Lvl ${hardware.level}`}
         </h3>
         <p>
           <FaBolt color="#f39c12" />{" "}

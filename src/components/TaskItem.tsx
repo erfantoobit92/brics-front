@@ -499,7 +499,7 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
             {taskIcons[task.type as TaskType] || <FiGlobe />}
           </div>
           <div>
-            <h3 className="font-bold text-white text-md">{task.title}</h3>
+            <h3 className="font-bold text-white text-md">{task.title.en}</h3>
             <p className="text-sm text-yellow-400 font-semibold">
               + {task.rewardCoin.toLocaleString()}
             </p>
