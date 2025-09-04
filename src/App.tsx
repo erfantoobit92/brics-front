@@ -11,8 +11,27 @@ import ProfilePage from "./pages/ProfilePage";
 import MiningPage from "./pages/MiningPage";
 import ExchangePage from "./pages/ExchangePage";
 import TasksPage from "./pages/TasksPage";
+import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
+import LanguageSelector from "./components/LanguageSelector";
 
 function App() {
+  const { i18n } = useTranslation();
+
+  // چک می‌کنیم آیا زبانی قبلاً انتخاب شده یا نه
+  const [showLanguageSelector, setShowLanguageSelector] = useState(!localStorage.getItem('userHasSelectedLanguage'));
+
+
+    useEffect(() => {
+    document.documentElement.lang = i18n.language;
+    document.documentElement.dir = i18n.dir(i18n.language);
+  }, [i18n, i18n.language]);
+
+  const handleLanguageSelected = () => {
+    setShowLanguageSelector(false);
+  };
+
+
   const { isLoading, token } = useAppContext();
 
   if (isLoading) {
@@ -20,7 +39,7 @@ function App() {
   }
 
   if (!token) {
-     // This could be a more user-friendly error page
+    // This could be a more user-friendly error page
     return (
       <div className="text-center mt-20">
         Authentication failed. Please restart the app.
@@ -28,11 +47,16 @@ function App() {
     );
   }
 
+
   return (
     <Router>
+            {showLanguageSelector && (
+              <LanguageSelector onLanguageSelect={handleLanguageSelected} />
+            )}
       <div className="h-screen w-screen flex flex-col">
         <main className="flex-grow overflow-y-auto">
           <Routes>
+
             <Route path="/" element={<TapPage />} />
             <Route path="/mine" element={<MiningPage />} />
             <Route path="/friends" element={<FriendsPage />} />

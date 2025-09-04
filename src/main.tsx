@@ -5,6 +5,7 @@ import "./index.css";
 import { AppProvider } from "./context/AppContext.tsx";
 import { TonConnectUIProvider } from "@tonconnect/ui-react";
 import { WEB_APP_URL } from "./constants/index.ts";
+import './i18n/i18n.ts';
 
 const Ton_Manifest_Url = `${WEB_APP_URL}/tonconnect-manifest.json`;
 // alert(Ton_Manifest_Url);
