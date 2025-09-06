@@ -16,6 +16,39 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+.scroll-hidden::-webkit-scrollbar {
+  display: none; /* کروم، سافاری */
+}
+
+.scroll-hidden {
+  -ms-overflow-style: none;  /* IE و Edge */
+  scrollbar-width: none;     /* فایرفاکس */
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* انیمیشن اسپینر */
 @keyframes spin {
   from {
@@ -40,4 +73,88 @@ body {
 
 .errorContainer {
     color: #e74c3c;
+}
+
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* انیمیشن چرخش باحال برای تصویر داخلی */
+@keyframes cool-spin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+/* انیمیشن درخشش و نبض زدن */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px 0px rgba(251, 191, 36, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 35px 10px rgba(251, 191, 36, 0.2);
+  }
+}
+
+
+/* استایل‌های اصلی دکمه */
+
+/* کانتینر اصلی در گوشه صفحه */
+.spin-button-container {
+   /* 1.5rem */
+  z-index: 50;
+}
+
+/* لایه بیرونی برای ساخت حاشیه گرادینتی چرخان */
+.spinning-border {
+  position: relative;
+  width: 60px;  /* 5rem */
+  height: 60px; /* 5rem */
+  border-radius: 9999px; /* full */
+  padding: 4px; /* p-1 */
+  /* گرادینت مخروطی که با چرخش، حس حرکت رو میده */
+  background-image: conic-gradient(from 180deg at 50% 50%, #fBBF24, #F97316, #EF4444, #fBBF24);
+  animation: spin-slow 3s linear infinite;
+}
+
+/* دکمه اصلی داخلی */
+.spin-button-inner {
+  width: 100%;
+  height: 100%;
+  background-color: #1f2937; /* bg-slate-800 */
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.4), 0 4px 6px -2px rgba(249, 115, 22, 0.4);
+  transition: transform 0.3s ease;
+  animation: pulse-glow 2.5s infinite ease-in-out;
+}
+
+.spin-button-container:hover .spin-button-inner {
+  transform: scale(1.1);
+}
+
+.spin-button-container:active .spin-button-inner {
+  transform: scale(0.95);
+}
+
+/* تصویر چرخان داخل دکمه */
+.spin-button-image {
+  width: 64px;  /* 4rem */
+  height: 64px; /* 4rem */
+  object-fit: contain;
+  animation: cool-spin 4s cubic-bezier(0.6, -0.28, 0.735, 0.045) infinite;
 }

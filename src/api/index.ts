@@ -5,8 +5,8 @@
   export const Axios_Api = axios.create({
     baseURL: Main_API_URL,
     headers: {
-      "bypass-tunnel-reminder": "102.129.255.101",
-      "x-lt-auth": "102.129.255.101",
+      "bypass-tunnel-reminder": "194.146.93.248",
+      "x-lt-auth": "194.146.93.248",
       // Accept: "*/*",
       // Connection: "keep-alive",
     },

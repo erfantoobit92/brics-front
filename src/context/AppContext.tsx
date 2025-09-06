@@ -15,6 +15,7 @@ interface AppContextType {
 }
 
 interface LoginUserInterface {
+  photoUrl?: string;
   firstName?: string;
   lastName?: string;
   username?: string;
