@@ -262,9 +262,6 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
         "Transaction sent! Please wait for blockchain confirmation before claiming."
       );
 
-      // (اختیاری) می‌تونی یک لینک به tonscan هم بهش بدی
-      // const boc = result.boc; // میتونی از این برای ساخت لینک استفاده کنی
-
       // 4. تسک رو به حالت STARTED در بیار
       await Api_Start_Task(task.id);
       onTaskUpdate(); // لیست تسک‌ها رو رفرش کن تا دکمه Claim ظاهر بشه
@@ -303,47 +300,6 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
       alert(error);
     }
 
-    // setIsProcessing(true);
-
-    // 2. اطلاعات استوری رو از metadata تسک آماده می‌کنیم
-    // const storyParams = {
-    //   story_type: "photo", // یا 'video'
-    //   // URL عکس باید عمومی و قابل دسترس باشه (مثلاً روی CDN یا هاست خودتون)
-    //   blob: await fetch(task.metadata.imageUrl).then((res) => res.blob()),
-    //   caption: `${task.metadata.caption}\n\nJoin us: t.me/your_bot_name`,
-    //   attachment: {
-    //     type: "bot",
-    //     url: `t.me/your_bot_name?start=story_${task.id}`, // لینک به ربات شما
-    //   },
-    // };
-
-    // 3. صفحه ساخت استوری رو به کاربر نشون میدیم
-    // tg.showStoryBox(storyParams, async (result: any) => {
-    //   // این callback بعد از تعامل کاربر اجرا میشه
-    //   if (result.ok === true) {
-    //     // کاربر استوری رو با موفقیت پست کرد!
-    //     toast.success("Story posted! Claiming your reward...");
-
-    //     try {
-    //       // 4. حالا endpoint اختصاصی بک‌اند رو صدا می‌زنیم
-    //       const response = await Api_Complete_Post_Story_Task();
-    //       toast.success(
-    //         `+${task.rewardCoin.toLocaleString()}! Reward claimed!`
-    //       );
-    //       onTaskUpdate(); // لیست تسک‌ها رو رفرش کن
-    //     } catch (error: any) {
-    //       toast.error(
-    //         error.response?.data?.message || "Failed to claim reward."
-    //       );
-    //     } finally {
-    //       setIsProcessing(false);
-    //     }
-    //   } else {
-    //     // کاربر پنجره رو بست یا کنسل کرد
-    //     toast.error("You cancelled posting the story.");
-    //     setIsProcessing(false);
-    //   }
-    // });
   };
 
   const renderActionButton = () => {

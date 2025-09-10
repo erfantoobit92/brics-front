@@ -289,7 +289,7 @@ const MiningPage: React.FC = () => {
               {data.unclaimedMiningReward.toFixed(6)}
             </span>
             <p className="text-xs text-gray-400">
-              {t('total_brics')}: {data.bricsBalance.toFixed(6)}
+              {t('brics_balance')}: {data.bricsBalance.toFixed(6)}
             </p>
           </div>
         </div>
