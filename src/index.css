@@ -25,8 +25,34 @@ body {
   scrollbar-width: none;     /* فایرفاکس */
 }
 
+/* برای کل سایت */
+::-webkit-scrollbar {
+  width: 6px; /* ضخامت اسکرول‌بار */
+}
 
+::-webkit-scrollbar-track {
+  background: #452fa6; /* رنگ پس‌زمینه */
+}
 
+::-webkit-scrollbar-thumb {
+  background-color: #ee34c8; /* رنگ اسکرول */
+  border-radius: 10px; /* گرد کردن */
+}
+
+/* برای فایرفاکس */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #ee34c8 #452fa6;
+}
+
+.scroll-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
 
 
 

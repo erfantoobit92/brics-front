@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAppContext } from "../context/AppContext";
 import { Api_Get_Profile } from "../api";
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "../components/LanguageSelector";
+import { NavLink } from "react-router-dom";
 
 interface UserProfile {
   id: number;
@@ -36,6 +39,30 @@ const ProfilePage = () => {
     localStorage.clear();
     window.location.href = "/";
   };
+
+  const { i18n } = useTranslation();
+
+  // چک می‌کنیم آیا زبانی قبلاً انتخاب شده یا نه
+  const [showLanguageSelector, setShowLanguageSelector] = useState(
+    !localStorage.getItem("userHasSelectedLanguage")
+  );
+
+  useEffect(() => {
+    document.documentElement.lang = i18n.language;
+    document.documentElement.dir = i18n.dir(i18n.language);
+  }, [i18n, i18n.language]);
+
+  const handleLanguageSelected = () => {
+    setShowLanguageSelector(false);
+  };
+
+  const changeLanguageOpen = () => {
+    setShowLanguageSelector(true);
+  };
+
+  if (showLanguageSelector) {
+    return <LanguageSelector onLanguageSelect={handleLanguageSelected} />;
+  }
 
   if (loading) {
     return (
@@ -106,12 +133,26 @@ const ProfilePage = () => {
 
       <div className="mt-8">
         <button
+          onClick={changeLanguageOpen}
+          className="w-full bg-lime-500 my-4 hover:bg-lime-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300"
+        >
+          Change Language
+        </button>
+
+        <NavLink to="/change">
+          <button className="w-full bg-orange-500 my-4 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300">
+            Convert Page
+          </button>
+        </NavLink>
+
+        <button
           onClick={handleLogout}
           className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300"
         >
           Log Out
         </button>
-        <p className="text-xs text-gray-500 text-center mt-2">
+
+        <p className="text-xs text-gray-500 text-center mt-2 pb-48">
           Logging out will clear your session. You'll need to restart the app
           from Telegram.
         </p>

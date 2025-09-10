@@ -1,5 +1,6 @@
-// export const Main_API_URL = "https://brics-trade-back.loca.lt";
-export const Main_API_URL = "https://api.mohammaditest.ir";
+// export const Main_API_URL = "http://192.168.221.132:3000";
+export const Main_API_URL = "http://127.0.0.1:3000";
+// export const Main_API_URL = "https://api.mohammaditest.ir";
 export const WEB_APP_URL = "https://jemjoo.erfuni.ir";
 
 export const Telegram_Bot_Url = "t.me/Bricstrade_Bot/Brics_Trade";

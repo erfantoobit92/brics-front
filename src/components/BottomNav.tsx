@@ -1,104 +1,11 @@
-// import { useTranslation } from "react-i18next";
-// import { Link } from "react-router-dom";
-// import { FaUserFriends } from "react-icons/fa";
-// import { IoHome } from "react-icons/io5";
-// import { BiSolidCoinStack } from "react-icons/bi";
-// import { SiJasmine } from "react-icons/si";
-// import { CgProfile } from "react-icons/cg";
-// import { TbArrowsExchange } from "react-icons/tb";
-// import { SiGoogletasks } from "react-icons/si";
-// import { RiBitCoinFill } from "react-icons/ri";
 
-// const BottomNav = () => {
-//   const { t } = useTranslation(); // از هوک استفاده کن
-
-//   // const navItems = [
-//   //   { path: "/", label: "Tap" },
-//   //   { path: "/mine", label: "Mine" }, // لینک جدید
-//   //   { path: "/tasks", label: "Tasks" },
-//   //   { path: "/friends", label: "Friends" },
-//   //   { path: "/change", label: "Convert" },
-//   //   { path: "/profile", label: "Profile" },
-//   // ];
-
-//   return (
-//     <div className="flex !align-center !px-auto !items-center w-[100%] h-20">
-//       <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-[calc(100%-2rem)] max-w-xl bg-[#272a2f] flex justify-around items-center z-50 rounded-3xl text-xs">
-//         {/* ... بقیه کد ... */}
-//         <Link
-//           to="/"
-//           className="text-center text-white p-4 flex flex-col items-center gap-1"
-//         >
-//           <RiBitCoinFill size={24} />
-//           <p>{t("tap")}</p> {/* متن ثابت رو با t('key') جایگزین کن */}
-//         </Link>
-//         <Link
-//           to="/friends"
-//           className="text-center text-white p-4 flex flex-col items-center gap-1"
-//         >
-//           <FaUserFriends size={24} />
-//           <p>{t("friends")}</p>
-//         </Link>
-//         <Link
-//           to="/tasks"
-//           className="text-center text-white p-4 flex flex-col items-center gap-1"
-//         >
-//           <SiGoogletasks size={24} />
-//           <p>{t("tasks")}</p>
-//         </Link>
-//         <Link
-//           to="/mine"
-//           className="text-center text-white p-4 flex flex-col items-center gap-1"
-//         >
-//           <SiJasmine size={24} />
-//           <p>{t("mine")}</p>
-//         </Link>
-//         <Link
-//           to="/change"
-//           className="text-center text-white p-4 flex flex-col items-center gap-1"
-//         >
-//           <TbArrowsExchange size={24} />
-//           <p>{t("change")}</p>
-//         </Link>
-//         <Link
-//           to="/profile"
-//           className="text-center text-white p-4 flex flex-col items-center gap-1"
-//         >
-//           <CgProfile size={24} />
-//           <p>{t("profile")}</p>
-//         </Link>
-//       </div>
-//     </div>
-
-//     // <nav className="w-full bg-gray-800 p-2">
-//     //   <ul className="flex justify-around items-center">
-//     //     {navItems.map((item) => (
-//     //       <li key={item.path}>
-//     //         <NavLink
-//     //           to={item.path}
-//     //           className={({ isActive }) =>
-//     //             `flex flex-col items-center gap-1 text-xs ${
-//     //               isActive ? "text-yellow-400" : "text-gray-400"
-//     //             }`
-//     //           }
-//     //         >
-//     //           <span>{item.label}</span>
-//     //         </NavLink>
-//     //       </li>
-//     //     ))}
-//     //   </ul>
-//     // </nav>
-//   );
-// };
-
-// export default BottomNav;
 
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 
 // آیکون‌ها رو از react-icons ایمپورت می‌کنیم
-import { RiCopperCoinLine, RiTeamLine } from "react-icons/ri";
+import {  RiTeamLine } from "react-icons/ri";
 import { PiHandTapFill, PiHammer } from "react-icons/pi";
 import { PiCoinsDuotone } from "react-icons/pi";
 

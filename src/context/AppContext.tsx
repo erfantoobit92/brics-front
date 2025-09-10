@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { Api_Get_Profile, Api_Login_With_Telegram } from "../api";
 import type { User, ShareStoryOptions, shareStory } from "@telegram-apps/sdk";
-  import { useRawInitData, useLaunchParams } from "@telegram-apps/sdk-react";
+import { useRawInitData, useLaunchParams } from "@telegram-apps/sdk-react";
 import type { AxiosError } from "axios";
 
 interface AppContextType {
@@ -43,32 +43,31 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-
   useEffect(() => {
     const authenticate = async () => {
-        // localStorage.clear();
+      // localStorage.clear();
 
       const initDataString = rawInitData;
       const startParamString = launchParams.ref;
       if (initDataString) {
         if (!token) {
           try {
-            const { access_token, user } = await Api_Login_With_Telegram(
-              initDataString,
-              startParamString as string | undefined
-            );
+            const { access_token, user } = await Api_Login_With_Telegram({
+              initData: initDataString,
+              startParam: startParamString as string | undefined,
+              isPremium: launchParams.tgWebAppData?.user?.is_premium ?? false,
+            });
             localStorage.setItem("token", access_token);
             setToken(access_token);
             setUser(user);
           } catch (error) {
-            alert(JSON.stringify(error))
+            alert(JSON.stringify(error));
             console.error("Failed to login", error);
           } finally {
             setIsLoading(false);
           }
         } else if (user == null) {
-          console.log(user);
-          
+
           const data = await Api_Get_Profile();
           setUser(data);
           setIsLoading(false);
@@ -85,7 +84,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const telegramUser = launchParams.tgWebAppData?.user;
   const value = { token, isLoading, telegramUser, user, setUser };
-  
+
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 

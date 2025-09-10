@@ -2,14 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // --- آیکون‌ها (بدون تغییر)
-import {
-  FaBolt,
-  FaCoins,
-  FaArrowUp,
-  FaServer,
-  FaSpinner,
-  FaLock,
-} from "react-icons/fa";
+import { FaBolt, FaSpinner } from "react-icons/fa";
 import { RiCopperCoinFill } from "react-icons/ri";
 
 // --- API ها (بدون تغییر)
@@ -21,13 +14,8 @@ import {
 } from "../api";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
+import { ClipLoader } from "react-spinners";
 
-// --- عکس‌ها و گیف‌ها (این‌ها رو با آدرس‌های واقعی خودت جایگزین کن)
-// import candyIcon from '../assets/images/candy.png';
-// import minerGif from '../assets/images/miner.gif';
-// import hardwareImage1 from '../assets/images/postman-cat.png'; // مثال
-// import hardwareImage2 from '../assets/images/director-cat.png'; // مثال
-// import hardwareImage3 from '../assets/images/doctor-cat.png'; // مثال
 
 // --- تایپ‌ها (بدون تغییر)
 interface CombinedHardware {
@@ -71,6 +59,8 @@ const HardwareCard: React.FC<HardwareCardProps> = ({
   buyingId,
   image,
 }) => {
+  const { i18n } = useTranslation();
+
   const isUpgrading = upgradingId === hardware.hardwareId;
   const isBuying = buyingId === hardware.hardwareId;
   const isLoading = isUpgrading || isBuying;
@@ -98,13 +88,13 @@ const HardwareCard: React.FC<HardwareCardProps> = ({
       {/* عکس سخت‌افزار */}
       <img
         src={image}
-        alt={hardware.name.en}
+        alt={hardware.name[i18n.language]}
         className="w-24 h-24 object-contain mb-2"
       />
 
-      <h3 className="font-bold text-md">{hardware.name.en}</h3>
+      <h3 className="font-bold text-md">{hardware.name[i18n.language]}</h3>
       <p className="text-xs text-gray-400 mb-2">
-        {hardware.isOwned ? `${t('level')} ${hardware.level}` : t("buy")}
+        {hardware.isOwned ? `${t("level")} ${hardware.level}` : t("buy")}
       </p>
 
       {/* نرخ ماینینگ */}
@@ -119,7 +109,9 @@ const HardwareCard: React.FC<HardwareCardProps> = ({
       {/* دکمه آپگرید یا خرید */}
       {hardware.isOwned ? (
         <motion.button
-          onClick={() => hardware.hardwareId && !isLoading && onUpgrade(hardware.hardwareId)}
+          onClick={() =>
+            hardware.hardwareId && !isLoading && onUpgrade(hardware.hardwareId)
+          }
           disabled={hardware.isMaxLevel || isLoading}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -132,8 +124,10 @@ const HardwareCard: React.FC<HardwareCardProps> = ({
           ) : (
             <>
               <img src="/images/coin.png" alt="cost" className="w-4 h-4" />
-              <span className="text-sm">{hardware.nextLevelUpgradeCost?.toLocaleString()}</span>
-              <span className="text-[8px]">{t('upgrade')}</span>
+              <span className="text-sm">
+                {hardware.nextLevelUpgradeCost?.toLocaleString()}
+              </span>
+              <span className="text-[8px]">{t("upgrade")}</span>
             </>
           )}
         </motion.button>
@@ -151,7 +145,7 @@ const HardwareCard: React.FC<HardwareCardProps> = ({
             <>
               <img src="/images/coin.png" alt="cost" className="w-4 h-4" />
               <span>{hardware.buyCost?.toLocaleString()}</span>
-              <span className="text-[8px]">{t('buy')}</span>
+              <span className="text-[8px]">{t("buy")}</span>
             </>
           )}
         </motion.button>
@@ -256,16 +250,23 @@ const MiningPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-900">
-        <FaSpinner className="text-white text-5xl animate-spin" />
-      </div>
+      <motion.div
+        style={{ backgroundImage: `url('/images/bg.png')` }}
+        className="w-full h-full flex flex-col p-4 text-white overflow-hidden bg-cover bg-center"
+      >
+        {loading && (
+          <div className="flex justify-center items-center h-full">
+            <ClipLoader color="#EAB308" size={50} />
+          </div>
+        )}
+      </motion.div>
     );
   }
 
   if (error || !data) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-900 text-red-500">
-        {error || t('no_data_available')}
+        {error || t("no_data_available")}
       </div>
     );
   }
@@ -278,130 +279,136 @@ const MiningPage: React.FC = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       style={{ backgroundImage: `url('/images/bg.png')` }}
-      className="w-full h-full flex flex-col p-4 text-white overflow-hidden bg-cover bg-center"
+      className="w-full h-full bg-cover bg-center text-white overflow-hidden"
     >
-      {/* ========== هدر: امتیازات و دکمه Claim ========== */}
-      <header className="flex-shrink-0">
-        <div className="flex justify-center items-center gap-2">
-          <img src="/images/coin.png" alt="Unclaimed" className="w-8 h-8" />
-          <div className="text-center">
-            <span className="text-3xl font-bold tracking-wider">
-              {data.unclaimedMiningReward.toFixed(6)}
-            </span>
-            <p className="text-xs text-gray-400">
-              {t('brics_balance')}: {data.bricsBalance.toFixed(6)}
-            </p>
+      <div className="flex flex-col p-4 !overflow-y-auto scroll-hidden h-[calc(100%-110px)]">
+        {/* ========== هدر: امتیازات و دکمه Claim ========== */}
+        <header className="flex-shrink-0">
+          <div className="flex justify-center items-center gap-2">
+            <img src="/images/coin.png" alt="Unclaimed" className="w-8 h-8" />
+            <div className="text-center">
+              <span className="text-3xl font-bold tracking-wider">
+                {data.unclaimedMiningReward.toFixed(6)}
+              </span>
+              <p className="text-xs text-gray-400">
+                {t("brics_balance")}: {data.bricsBalance.toFixed(6)}
+              </p>
+            </div>
+          </div>
+          <motion.button
+            onClick={handleClaim}
+            disabled={data.unclaimedMiningReward < 0.000001 || isClaiming}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="w-full mt-3 bg-gradient-to-r from-green-400 to-lime-500 text-black font-bold py-3 rounded-full shadow-lg shadow-green-500/50 disabled:opacity-60 flex items-center justify-center"
+          >
+            {isClaiming ? (
+              <FaSpinner className="animate-spin" />
+            ) : (
+              t("claim_rewards")
+            )}
+          </motion.button>
+        </header>
+
+        {/* ========== تب‌ها: Mining Rigs ========== */}
+        <div className="flex-shrink-0 my-4">
+          <div className="flex p-2 px-1 bg-white/25 backdrop-blur-md rounded-xl w-full max-w-sm mx-auto h-18">
+            {["mine", "upgrade", "buy"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`${
+                  activeTab === tab ? "" : "hover:bg-white/10"
+                } flex-1 text-md font-bold p-2 rounded-xl relative transition mx-1`}
+              >
+                {activeTab === tab && (
+                  <motion.div
+                    layoutId="tab-pill-mining"
+                    className="absolute inset-0 bg-white/20 backdrop-blur-md !rounded-xl"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{t(tab)}</span>
+              </button>
+            ))}
           </div>
         </div>
-        <motion.button
-          onClick={handleClaim}
-          disabled={data.unclaimedMiningReward < 0.000001 || isClaiming}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="w-full mt-3 bg-gradient-to-r from-green-400 to-lime-500 text-black font-bold py-3 rounded-full shadow-lg shadow-green-500/50 disabled:opacity-60 flex items-center justify-center"
-        >
-          {isClaiming ? (
-            <FaSpinner className="animate-spin" />
-          ) : (
-            t('claim_rewards')
-          )}
-        </motion.button>
-      </header>
 
-      {/* ========== تب‌ها: Mining Rigs ========== */}
-      <div className="flex-shrink-0 my-4">
-        <div className="flex p-2 px-1 bg-white/25 backdrop-blur-md rounded-xl w-full max-w-sm mx-auto h-18">
-          {["mine", "upgrade", "buy"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`${
-                activeTab === tab ? "" : "hover:bg-white/10"
-              } flex-1 text-md font-bold p-2 rounded-xl relative transition mx-1`}
+        {/* ========== محتوای تب‌ها ========== */}
+        <main className="flex-grow ">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -10, opacity: 0 }}
+              transition={{ duration: 0.2 }}
             >
-              {activeTab === tab && (
-                <motion.div
-                  layoutId="tab-pill-mining"
-                  className="absolute inset-0 bg-white/20 backdrop-blur-md !rounded-xl"
-                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                />
-              )}
-              <span className="relative z-10">{t(tab)}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ========== محتوای تب‌ها ========== */}
-      <main className="flex-grow overflow-y-auto scroll-hidden">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -10, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {activeTab === "mine" && (
-              <div className="flex flex-col items-center justify-center h-full text-center p-4">
-                <motion.img
-                  src="/images/coin.png"
-                  alt="Mining..."
-                  className="w-48 h-48"
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
-                <div className="mt-4 p-4 bg-black/20 rounded-lg w-full max-w-xs">
-                  <p className="text-gray-400 text-sm">{t('total_rate_per_hour')}</p>
-                  <p className="text-2xl font-bold text-cyan-300 flex items-center justify-center gap-2">
-                    <FaBolt /> {data.totalMiningRatePerHour.toFixed(6)}
-                  </p>
-                </div>
-                <div className="mt-2 p-4 bg-black/20 rounded-lg w-full max-w-xs">
-                  <p className="text-gray-400 text-sm">{t('balance_for_upgrade')}</p>
-                  <p className="text-2xl font-bold text-yellow-300 flex items-center justify-center gap-2">
-                    <RiCopperCoinFill />{" "}
-                    {Math.floor(data.balance).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {(activeTab === "upgrade" || activeTab === "buy") && (
-              <motion.div
-                className="grid grid-cols-2 gap-4 pb-24"
-                variants={{
-                  visible: { transition: { staggerChildren: 0.05 } },
-                }}
-                initial="hidden"
-                animate="visible"
-              >
-                {(activeTab === "upgrade"
-                  ? unlockedHardwares
-                  : lockedHardwares
-                ).map((hw) => (
-                  <HardwareCard
-                  t={t}
-                    key={hw.hardwareId}
-                    hardware={hw}
-                    onUpgrade={handleUpgrade}
-                    onBuy={handleBuy}
-                    upgradingId={upgradingId}
-                    buyingId={buyingId}
-                    image={
-                      hardwareImages[hw.hardwareId] || "/images/character.png"
-                    } // <<-- پاس دادن عکس
+              {activeTab === "mine" && (
+                <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                  <motion.img
+                    src="/images/coin.png"
+                    alt="Mining..."
+                    className="w-48 h-48"
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
                   />
-                ))}
-              </motion.div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </main>
+                  <div className="mt-4 p-4 bg-black/20 rounded-lg w-full max-w-xs">
+                    <p className="text-gray-400 text-sm">
+                      {t("total_rate_per_hour")}
+                    </p>
+                    <p className="text-2xl font-bold text-cyan-300 flex items-center justify-center gap-2">
+                      <FaBolt /> {data.totalMiningRatePerHour.toFixed(6)}
+                    </p>
+                  </div>
+                  <div className="mt-2 p-4 bg-black/20 rounded-lg w-full max-w-xs">
+                    <p className="text-gray-400 text-sm">
+                      {t("balance_for_upgrade")}
+                    </p>
+                    <p className="text-2xl font-bold text-yellow-300 flex items-center justify-center gap-2">
+                      <RiCopperCoinFill />{" "}
+                      {Math.floor(data.balance).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {(activeTab === "upgrade" || activeTab === "buy") && (
+                <motion.div
+                  className="grid grid-cols-2 gap-4 pb-24"
+                  variants={{
+                    visible: { transition: { staggerChildren: 0.05 } },
+                  }}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {(activeTab === "upgrade"
+                    ? unlockedHardwares
+                    : lockedHardwares
+                  ).map((hw) => (
+                    <HardwareCard
+                      t={t}
+                      key={hw.hardwareId}
+                      hardware={hw}
+                      onUpgrade={handleUpgrade}
+                      onBuy={handleBuy}
+                      upgradingId={upgradingId}
+                      buyingId={buyingId}
+                      image={
+                        hardwareImages[hw.hardwareId] || "/images/character.png"
+                      } // <<-- پاس دادن عکس
+                    />
+                  ))}
+                </motion.div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </main>
+      </div>
     </motion.div>
   );
 };

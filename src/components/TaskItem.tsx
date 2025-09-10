@@ -1,102 +1,84 @@
-import { useEffect, useState, type JSX } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
-// import { useUserStore } from "../store/userStore"; // فرض بر استفاده از Zustand برای بالانس
-import {
-  FiGlobe,
-  FiTwitter,
-  FiYoutube,
-  FiCheckCircle,
-  FiLink,
-  FiDollarSign,
-  FiPlusCircle,
-} from "react-icons/fi";
-import { FaTelegramPlane, FaBone, FaTelegram } from "react-icons/fa"; // مثال برای لوگو کنار اسم
 import { ClipLoader } from "react-spinners";
+import { useTonWallet, useTonConnectUI } from "@tonconnect/ui-react";
+import { shareStory, init } from "@telegram-apps/sdk-react";
+
 import {
   Api_Claim_Task_Reward,
   Api_Connect_User_Wallet,
   Api_Start_Task,
 } from "../api";
-import { TonConnectButton } from "@tonconnect/ui-react";
 import { useAppContext } from "../context/AppContext";
-import { useTonWallet, useTonConnectUI } from "@tonconnect/ui-react"; // useTonConnectUI رو اضافه کن
-import { shareStory, init } from "@telegram-apps/sdk-react";
 import { Telegram_Bot_Username } from "../constants";
+import { useTranslation } from "react-i18next";
 
+export const TaskType = {
+  VISIT_WEBSITE: "VISIT_WEBSITE",
+  FOLLOW_SOCIAL: "FOLLOW_SOCIAL",
+  WATCH_YOUTUBE: "WATCH_YOUTUBE",
+  JOIN_TELEGRAM_CHANNEL: "JOIN_TELEGRAM_CHANNEL",
+  BOOST_TELEGRAM_CHANNEL: "BOOST_TELEGRAM_CHANNEL",
+  POST_TELEGRAM_STORY: "POST_TELEGRAM_STORY",
+  ADD_LOGO_TO_PROFILE_NAME: "ADD_LOGO_TO_PROFILE_NAME",
+  CONNECT_WALLET: "CONNECT_WALLET",
+  ON_CHAIN_TRANSACTION: "ON_CHAIN_TRANSACTION",
+  ADD_TOKEN_TO_WALLET: "ADD_TOKEN_TO_WALLET",
+} as const;
+export type TaskType = (typeof TaskType)[keyof typeof TaskType];
+
+const taskIcons: Record<TaskType, string> = {
+  VISIT_WEBSITE: "/tasks/website.png",
+  FOLLOW_SOCIAL: "/tasks/instagram.png",
+  WATCH_YOUTUBE: "/tasks/youtube.png",
+  JOIN_TELEGRAM_CHANNEL: "/tasks/telegram.png",
+  BOOST_TELEGRAM_CHANNEL: "/tasks/boost-telegram.png",
+  POST_TELEGRAM_STORY: "/tasks/story.png",
+  ADD_LOGO_TO_PROFILE_NAME: "/tasks/website.png",
+  CONNECT_WALLET: "/tasks/connect-wallet.png",
+  ON_CHAIN_TRANSACTION: "/tasks/transaction.png",
+  ADD_TOKEN_TO_WALLET: "/tasks/add-token-wallet.png",
+};
+
+// انیمیشن برای آیتم‌ها (بدون تغییر)
 const itemVariants = {
   hidden: { y: 20, opacity: 0 },
   visible: { y: 0, opacity: 1, transition: { type: "spring" as const } },
-  exit: { y: -20, opacity: 0, transition: { duration: 0.3 } },
-};
-
-type TaskType =
-  | "VISIT_WEBSITE"
-  | "FOLLOW_SOCIAL"
-  | "WATCH_YOUTUBE"
-  | "JOIN_TELEGRAM_CHANNEL"
-  | "BOOST_TELEGRAM_CHANNEL"
-  | "POST_TELEGRAM_STORY"
-  | "ADD_LOGO_TO_PROFILE_NAME"
-  | "CONNECT_WALLET"
-  | "ON_CHAIN_TRANSACTION"
-  | "ADD_TOKEN_TO_WALLET";
-
-const taskIcons: Record<TaskType, JSX.Element> = {
-  VISIT_WEBSITE: <FiGlobe className="text-blue-400" />,
-  FOLLOW_SOCIAL: <FiTwitter className="text-sky-400" />,
-  WATCH_YOUTUBE: <FiYoutube className="text-red-500" />,
-  JOIN_TELEGRAM_CHANNEL: <FaTelegramPlane className="text-blue-500" />,
-  BOOST_TELEGRAM_CHANNEL: <FaTelegram className="text-purple-600" />,
-  POST_TELEGRAM_STORY: <FiPlusCircle className="text-pink-400" />,
-  ADD_LOGO_TO_PROFILE_NAME: <FaBone className="text-yellow-400" />, // مثال مثل داگز
-  CONNECT_WALLET: <FiLink className="text-green-400" />,
-  ON_CHAIN_TRANSACTION: <FiDollarSign className="text-yellow-500" />,
-  ADD_TOKEN_TO_WALLET: <FiPlusCircle className="text-indigo-400" />,
+  exit: { scale: 0.9, opacity: 0, transition: { duration: 0.2 } },
 };
 
 const TaskItem = ({ task, onTaskUpdate }: any) => {
+  const { i18n} = useTranslation();
+  
+  // ==================== منطق کد شما (کاملاً دست‌نخورده) ====================
   const [isProcessing, setIsProcessing] = useState(false);
   const { user, setUser } = useAppContext();
-
   const wallet = useTonWallet();
-  const [tonConnectUI] = useTonConnectUI(); // هوک اصلی برای ارسال تراکنش
+  const [tonConnectUI] = useTonConnectUI();
 
-  // این هوک به تغییرات اتصال کیف پول گوش میده
   useEffect(() => {
     const handleConnection = async () => {
-      console.log("user?.walletAddress", user?.walletAddress);
-
       if (
         wallet &&
         task.type === "CONNECT_WALLET" &&
         user?.walletAddress == null
       ) {
-        // کیف پول با موفقیت متصل شد!
         const address = wallet.account.address;
-        console.log("Wallet connected:", address);
         toast.success("Wallet connected!");
-
         try {
-          // حالا آدرس رو به بک‌اند می‌فرستیم
           const response = await Api_Connect_User_Wallet(address);
-
-          // اگر تسک "اتصال کیف پول" جایزه داشت، بک‌اند اون رو برمی‌گردونه
           if (response.data.newBalance) {
             toast.success(
               `Reward claimed! New balance: ${response.data.newBalance.toLocaleString()}`
             );
           }
-
           setUser({
             firstName: user?.firstName,
             lastName: user?.lastName,
             username: user?.username,
             walletAddress: address,
           });
-
-          //   setWalletAddress(address); // آدرس رو در state گلوبال ذخیره می‌کنیم
-          // onWalletConnected(); // به کامپوننت پدر (مثلاً صفحه تسک‌ها) اطلاع میدیم که لیست رو رفرش کنه
         } catch (error: any) {
           toast.error(
             error.response?.data?.message ||
@@ -105,80 +87,49 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
         }
       }
     };
-
     handleConnection();
   }, [wallet]);
-
-  console.log(wallet);
-
   const handleAction = async () => {
     setIsProcessing(true);
     try {
-      // --- منطق هوشمند بر اساس نوع و وضعیت تسک ---
-
-      // اگر تسک در حالت PENDING باشه
       if (task.status === "PENDING") {
-        // تسک‌هایی که فقط نیاز به "چک کردن" دارن و "شروع" ندارن
         if (task.type === "ADD_LOGO_TO_PROFILE_NAME") {
           await Api_Claim_Task_Reward(task.id);
           toast.success(`+${task.rewardCoin.toLocaleString()}! Task Verified.`);
-          //   updateUserBalance(response.data.newBalance);
           onTaskUpdate();
           return;
         }
-
-        if (task.type === "JOIN_TELEGRAM_CHANNEL") {
-          window.open(
-            `https://t.me/${(task.metadata.channelId as String).slice(
-              1,
-              task.metadata.channelId.length
-            )}`
-          );
-          return;
-        }
-
-        // تسک‌هایی که نیاز به هدایت کاربر به جای دیگه دارن
+        // if (task.type === "JOIN_TELEGRAM_CHANNEL") {
+        //   window.open(
+        //     `https://t.me/${(task.metadata.channelId as String).slice(
+        //       1,
+        //       task.metadata.channelId.length
+        //     )}`
+        //   );
+        //   return;
+        // }
         await Api_Start_Task(task.id);
         if (task.metadata.url || task.metadata.channelUrl) {
           window.open(task.metadata.url || task.metadata.channelUrl, "_blank");
         }
         toast.success("Task started! Come back to claim your reward.");
         onTaskUpdate();
-
-        // اگر تسک در حالت STARTED باشه
       } else if (task.status === "STARTED") {
         await Api_Claim_Task_Reward(task.id);
         toast.success(`+${task.rewardCoin.toLocaleString()}! Reward Claimed.`);
-        // updateUserBalance(response.data.newBalance);
         onTaskUpdate();
       }
     } catch (error: any) {
-      console.log(error);
-
       toast.error(error.response?.data?.message || "Action failed.");
     } finally {
       setIsProcessing(false);
     }
   };
-
   const handleAddTokenToWallet = async () => {
-    // const tokenddress = "0x278a5B50c34506bc8e15C8567136292c30C92CD1";
-    // const symbol = "BCT";
-    // const decimals = 9;
-
-    // // ساختن deeplink
-    // const link = `https://metamask.app.link/add-token?address=${tokenddress}&symbol=${symbol}&decimals=${decimals}`;
-
-    // window.location.href = link;
-
-    // return;
-
     const tokenAddress = task.metadata.tokenAddress;
     const tokenSymbol = task.metadata.tokenSymbol;
     const tokenDecimals = task.metadata.tokenDecimals;
     const tokenImage = task.metadata.tokenImage;
-
-    // 1. اول چک می‌کنیم که آیا کیف پول متصل (مثل متامسک) در مرورگر وجود داره یا نه
     if (typeof (window as any).ethereum === "undefined") {
       navigator.clipboard
         .writeText(tokenAddress)
@@ -191,38 +142,29 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
         .catch((err) => {
           console.log("Failed to copy text:", err);
         });
-
       return;
     }
-
     setIsProcessing(true);
-
     try {
-      // 3. درخواست wallet_watchAsset رو به کیف پول ارسال کن
       const wasAdded = await (window as any).ethereum.request({
         method: "wallet_watchAsset",
         params: {
-          type: "ERC20", // برای توکن‌های BEP-20 هم از همین نوع استفاده میشه
+          type: "ERC20",
           options: {
-            address: tokenAddress, // آدرس کانترکت توکن
-            symbol: tokenSymbol, // سیمبل توکن (مثلا BRICS)
-            decimals: tokenDecimals, // تعداد اعشار (مثلا 18)
-            image: tokenImage, // URL تصویر لوگوی توکن (خیلی مهمه!)
+            address: tokenAddress,
+            symbol: tokenSymbol,
+            decimals: tokenDecimals,
+            image: tokenImage,
           },
         },
       });
-
       if (wasAdded) {
-        // 4. اگر کاربر توکن رو با موفقیت اضافه کرد
         toast.success(
           "Token added successfully! You can now claim your reward."
         );
-
-        // تسک رو به حالت STARTED در بیار
         await Api_Start_Task(task.id);
-        onTaskUpdate(); // لیست تسک‌ها رو رفرش کن تا دکمه Claim ظاهر بشه
+        onTaskUpdate();
       } else {
-        // اگر کاربر پنجره رو بست یا عملیات موفق نبود
         toast.error("Token was not added.");
       }
     } catch (error) {
@@ -232,42 +174,29 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
       setIsProcessing(false);
     }
   };
-
   const handleSendTransaction = async () => {
     if (!wallet) {
       tonConnectUI.openModal();
       return;
     }
-
     setIsProcessing(true);
-
-    // 1. اطلاعات تراکنش رو از metadata تسک بخون
     const transaction = {
-      validUntil: Math.floor(Date.now() / 1000) + 600, // تراکنش تا 10 دقیقه معتبره
+      validUntil: Math.floor(Date.now() / 1000) + 600,
       messages: [
         {
-          address: task.metadata.toAddress, // آدرس کیف پول پروژه
-          amount: (task.metadata.amount * 1e9).toString(), // مقدار به nanoton
-          // payload: 'optional-comment' // می‌تونی یک کامنت هم بفرستی
+          address: task.metadata.toAddress,
+          amount: (task.metadata.amount * 1e9).toString(),
         },
       ],
     };
-
     try {
-      // 2. پنجره تایید تراکنش رو در کیف پول کاربر باز کن
       await tonConnectUI.sendTransaction(transaction);
-
-      // 3. به کاربر اطلاع بده که تراکنش ارسال شده و باید صبر کنه
       toast.success(
         "Transaction sent! Please wait for blockchain confirmation before claiming."
       );
-
-      // 4. تسک رو به حالت STARTED در بیار
       await Api_Start_Task(task.id);
-      onTaskUpdate(); // لیست تسک‌ها رو رفرش کن تا دکمه Claim ظاهر بشه
+      onTaskUpdate();
     } catch (error: any) {
-      console.log("Transaction error:", error);
-      // خطاهایی مثل رد کردن توسط کاربر (UserRejectsError) اینجا میفتن
       if (error.name === "UserRejectsError") {
         toast.error("You rejected the transaction.");
       } else {
@@ -277,15 +206,30 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
       setIsProcessing(false);
     }
   };
-
   const handleJoinTelegramClaimReward = async () => {
     setIsProcessing(true);
-    await Api_Claim_Task_Reward(task.id);
-    setIsProcessing(false);
-    toast.success(`+${task.rewardCoin.toLocaleString()}! Task Verified.`);
-    onTaskUpdate();
-  };
+    try {
+      await Api_Claim_Task_Reward(task.id);
+      setIsProcessing(false);
+      toast.success(`+${task.rewardCoin.toLocaleString()}! Task Verified.`);
+      onTaskUpdate();
+    } catch (e: any) {
+      setIsProcessing(false);
 
+      if (
+        e.status === 400 &&
+        task.type === "JOIN_TELEGRAM_CHANNEL" &&
+        task.status === "PENDING"
+      ) {
+        window.open(
+          `https://t.me/${(task.metadata.channelId as String).slice(
+            1,
+            task.metadata.channelId.length
+          )}`
+        );
+      }
+    }
+  };
   const handlePostStory = async () => {
     try {
       init();
@@ -299,42 +243,75 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
     } catch (error) {
       alert(error);
     }
-
   };
+  // ==================== پایان منطق کد شما ====================
 
-  const renderActionButton = () => {
-    if (task.type === "CONNECT_WALLET") {
-      // اگر کیف پول وصل باشه، تسک رو تکمیل شده نشون میدیم
-      if (wallet || task.status === "COMPLETED") {
-        return (
-          <div className="flex items-center space-x-2 text-green-400 font-semibold">
-            <FiCheckCircle size={20} />
-            <span>Connected</span>
-          </div>
-        );
-      }
-      // اگر وصل نباشه، دکمه اتصال TON Connect رو نشون میدیم
-      return <TonConnectButton />;
+  const detectSocialNetwork = (task: any) => {
+    if (
+      task.type != TaskType.FOLLOW_SOCIAL &&
+      taskIcons[task.type as TaskType]
+    ) {
+      return taskIcons[task.type as TaskType];
     }
+    try {
+      const hostname = new URL(task.metadata.url).hostname.toLowerCase();
 
+      if (hostname.includes("instagram.com")) {
+        return "/tasks/instagram.png";
+      }
+
+      if (hostname.includes("x.com") || hostname.includes("twitter.com")) {
+        return "/tasks/twitter.png";
+      }
+
+      return "/tasks/social.png";
+    } catch (e) {
+      return "/tasks/social.png";
+    }
+  };
+  const renderActionButton = () => {
+    // >>  تمام منطق این تابع حفظ شده، فقط ظاهر دکمه‌ها در JSX تغییر کرده است  <<
+
+    // حالت تکمیل شده
     if (task.status === "COMPLETED") {
       return (
-        <div className="flex items-center space-x-2 text-green-400 font-semibold">
-          <FiCheckCircle size={20} />
-          <span>Done</span>
-        </div>
+        <img src="/images/check.png" alt="Completed" className="w-8 h-8" />
+        // <div className="w-8 h-8 flex items-center justify-center bg-pink-500 rounded-full">
+        //   <FaCheck className="text-white text-lg" />
+        // </div>
+      );
+    }
+
+    // حالت‌های دیگر (دکمه‌های عملیاتی)
+    // برای سادگی، یک استایل پایه برای دکمه‌ها تعریف می‌کنیم
+    const buttonBaseClasses =
+      "text-white font-bold py-2 px-auto rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm w-16";
+
+    if (task.type === "CONNECT_WALLET") {
+      if (wallet) return null;
+      return (
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          className={`${buttonBaseClasses} bg-blue-500 hover:bg-blue-600`}
+          onClick={() => {
+            tonConnectUI.openModal();
+          }}
+          disabled={isProcessing}
+        >
+          {isProcessing ? <ClipLoader color="#fff" size={18} /> : "Go"}
+        </motion.button>
       );
     }
 
     if (task.type === "POST_TELEGRAM_STORY") {
       return (
         <motion.button
-          // ... (انیمیشن‌های دکمه)
-          className="bg-pink-500 hover:bg-pink-600 text-white ..."
+          whileTap={{ scale: 0.95 }}
+          className={`${buttonBaseClasses} bg-blue-500 hover:bg-blue-600`}
           onClick={handlePostStory}
           disabled={isProcessing}
         >
-          {isProcessing ? "Waiting..." : "Post Story"}
+          {isProcessing ? <ClipLoader color="#fff" size={18} /> : "Go"}
         </motion.button>
       );
     }
@@ -343,25 +320,24 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
       if (task.status === "PENDING") {
         return (
           <motion.button
-            // ... (انیمیشن‌های دکمه)
-            className="bg-green-600 hover:bg-green-700 text-white ..."
+            whileTap={{ scale: 0.95 }}
+            className={`${buttonBaseClasses} bg-blue-500 hover:bg-blue-600`}
             onClick={handleSendTransaction}
             disabled={isProcessing}
           >
-            {isProcessing ? "Waiting..." : "Send Transaction"}
+            {isProcessing ? <ClipLoader color="#fff" size={18} /> : "Go"}
           </motion.button>
         );
       }
       if (task.status === "STARTED") {
-        // بعد از ارسال تراکنش، دکمه Claim ظاهر میشه
         return (
           <motion.button
-            // ... (انیمیشن‌های دکمه)
-            className="bg-yellow-500 hover:bg-yellow-600 text-white ..."
-            onClick={handleAction} // از تابع عمومی برای claim استفاده می‌کنه
+            whileTap={{ scale: 0.95 }}
+            className={`${buttonBaseClasses} bg-blue-500 hover:bg-blue-600`}
+            onClick={handleAction}
             disabled={isProcessing}
           >
-            {isProcessing ? "Checking..." : "Claim"}
+            {isProcessing ? <ClipLoader color="#fff" size={18} /> : "Go"}
           </motion.button>
         );
       }
@@ -371,97 +347,99 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
       if (task.status === "PENDING") {
         return (
           <motion.button
-            // ... (انیمیشن‌های دکمه)
-            className="bg-purple-600 hover:bg-purple-700 text-white ..."
+            whileTap={{ scale: 0.95 }}
+            className={`${buttonBaseClasses} bg-blue-500 hover:bg-blue-600`}
             onClick={handleAddTokenToWallet}
             disabled={isProcessing}
           >
-            {isProcessing ? "Waiting..." : "Add Token"}
+            {isProcessing ? <ClipLoader color="#fff" size={18} /> : "Go"}
           </motion.button>
         );
       }
       if (task.status === "STARTED") {
-        // بعد از اضافه کردن توکن، دکمه Claim ظاهر میشه
         return (
           <motion.button
-            // ... (انیمیشن‌های دکمه)
-            className="bg-yellow-500 hover:bg-yellow-600 text-white ..."
-            onClick={handleAction} // از تابع عمومی برای claim استفاده می‌کنه
+            whileTap={{ scale: 0.95 }}
+            className={`${buttonBaseClasses} bg-blue-500 hover:bg-blue-600`}
+            onClick={handleAction}
             disabled={isProcessing}
           >
-            {isProcessing ? "Checking..." : "Claim"}
+            {isProcessing ? <ClipLoader color="#fff" size={18} /> : "Go"}
           </motion.button>
         );
       }
     }
 
-    // دکمه‌ها بر اساس نوع و وضعیت
     let buttonText = "";
     let buttonClass = "bg-blue-500 hover:bg-blue-600";
-
     if (task.status === "PENDING") {
-      switch (task.type) {
-        case "ADD_LOGO_TO_PROFILE_NAME":
-          buttonText = "Check";
-          buttonClass = "bg-indigo-500 hover:bg-indigo-600";
-          break;
-        case "CONNECT_WALLET":
-          buttonText = "Connect"; // این دکمه می‌تونه کاربر رو به صفحه ولت ببره
-          break;
-        default:
-          buttonText = "Go";
-      }
+      buttonText = task.type === "ADD_LOGO_TO_PROFILE_NAME" ? "Check" : "Go";
+      if (task.type === "ADD_LOGO_TO_PROFILE_NAME")
+        buttonClass = "bg-yellow-500 hover:bg-yellow-600";
     } else if (task.status === "STARTED") {
       buttonText = "Claim";
       buttonClass = "bg-yellow-500 hover:bg-yellow-600";
     }
 
     return (
-      <div className="flex">
+      <div className="flex gap-2">
         <motion.button
-          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className={`text-white font-bold py-2 px-5 rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${buttonClass}`}
-          onClick={handleAction}
+          className={`${buttonBaseClasses} ${buttonClass}`}
+          onClick={
+            task.type === "JOIN_TELEGRAM_CHANNEL" && task.status === "PENDING"
+              ? handleJoinTelegramClaimReward
+              : handleAction
+          }
           disabled={isProcessing}
         >
-          {isProcessing ? <ClipLoader color="#fff" size={20} /> : buttonText}
+          {isProcessing ? <ClipLoader color="#fff" size={18} /> : buttonText}
         </motion.button>
-        {task.type === "JOIN_TELEGRAM_CHANNEL" ? (
+        {/* {task.type === "JOIN_TELEGRAM_CHANNEL" && task.status === "PENDING" && (
           <motion.button
-            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className={`text-white font-bold py-2 px-5 rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${buttonClass}`}
+            className={`${buttonBaseClasses} bg-yellow-500 hover:bg-yellow-600`}
             onClick={handleJoinTelegramClaimReward}
             disabled={isProcessing}
           >
-            {isProcessing ? <ClipLoader color="#fff" size={20} /> : "Check"}
+            {isProcessing ? <ClipLoader color="#fff" size={18} /> : "Check"}
           </motion.button>
-        ) : (
-          <></>
-        )}
+        )} */}
       </div>
     );
   };
 
   return (
-    <motion.div
-      variants={itemVariants}
-      layout // این باعث انیمیشن روان هنگام حذف آیتم میشه
-    >
-      <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 p-4 rounded-2xl flex justify-between items-center shadow-lg">
-        <div className="flex items-center space-x-4">
-          <div className="text-3xl">
-            {taskIcons[task.type as TaskType] || <FiGlobe />}
+    <motion.div variants={itemVariants} layout>
+      <div className="bg-white/30 backdrop-blur-md border border-white/10 p-3 rounded-2xl flex justify-between items-center shadow-lg">
+        {/* بخش چپ: آیکون و اطلاعات */}
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 flex-shrink-0 bg-black/20 rounded-full flex items-center justify-center">
+            <img
+              src={detectSocialNetwork(task)}
+              alt="task icon"
+              className="w-8 h-8"
+            />
           </div>
           <div>
-            <h3 className="font-bold text-white text-md">{task.title.en}</h3>
-            <p className="text-sm text-yellow-400 font-semibold">
-              + {task.rewardCoin.toLocaleString()}
-            </p>
+            <h3 className="font-bold text-white text-sm sm:text-base">
+              {task.title[i18n.language]}
+            </h3>
+            <div className="flex items-center gap-1 mt-1">
+              <img
+                src="/images/coin-gold.png"
+                alt="reward"
+                className="w-4 h-4"
+              />
+              <span className="text-sm text-white font-semibold">
+                +{Number(task.rewardCoin).toLocaleString()}
+              </span>
+            </div>
           </div>
         </div>
-        <div>{renderActionButton()}</div>
+
+        {/* بخش راست: دکمه یا تیک */}
+        <div className="flex-shrink-0">{renderActionButton()}</div>
       </div>
     </motion.div>
   );

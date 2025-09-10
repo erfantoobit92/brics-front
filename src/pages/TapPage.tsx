@@ -7,7 +7,7 @@ import { Main_API_URL } from "../constants";
 
 // آیکون‌ها
 import { FaRocket } from "react-icons/fa";
-import { RiWifiFill } from "react-icons/ri";
+import { NavLink } from "react-router-dom";
 import { FaBolt } from "react-icons/fa6";
 import SpinButton from "../components/SpinButton";
 import { useTranslation } from "react-i18next";
@@ -99,28 +99,36 @@ const TapPage = () => {
 
       {/* بخش هدر: پروفایل و دکمه Boost */}
       <header className="w-full flex justify-between items-center p-4 z-10">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-purple-800 rounded-full flex items-center justify-center">
-            {user != null && (
-              <img
-                // اگر عکس وجود داشت نشون بده، وگرنه یک عکس پیش‌فرض بذار
-                src={user.photoUrl || "/images/default-profile.jpg"}
-                alt={t("profile")}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            )}
-          </div>
-          {user != null && (
-            <span className="font-bold text-lg">{user.firstName}</span>
-          )}
-        </div>
+        <NavLink to="/profile">
+          <motion.button
+            onClick={() => {}}
+            whileTap={{ scale: 0.95 }}
+            className="text-center flex flex-col items-center"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-purple-800 rounded-full flex items-center justify-center">
+                {user != null && (
+                  <img
+                    // اگر عکس وجود داشت نشون بده، وگرنه یک عکس پیش‌فرض بذار
+                    src={user.photoUrl || "/images/default-profile.jpg"}
+                    alt={t("profile")}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                )}
+              </div>
+              {user != null && (
+                <span className="font-bold text-lg">{user.firstName}</span>
+              )}
+            </div>
+          </motion.button>
+        </NavLink>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="flex items-center gap-2 bg-gradient-to-r from-green-400 to-lime-500 text-black font-bold py-2 px-4 rounded-full shadow-lg shadow-green-500/50"
         >
           <FaRocket />
-          {t('boost')}
+          {t("boost")}
         </motion.button>
       </header>
 
@@ -177,7 +185,7 @@ const TapPage = () => {
               <SpinButton onClick={handleSpinClick} />
             </div>
             <div className="text-center">
-              <span className="font-bold text-sm">{t('level')} 6 / 100</span>
+              <span className="font-bold text-sm">{t("level")} 6 / 100</span>
               <div className="w-24 bg-black/30 h-2 rounded-full mt-1 overflow-hidden">
                 <div className="h-full bg-purple-500 w-1/4 rounded-full"></div>
               </div>
