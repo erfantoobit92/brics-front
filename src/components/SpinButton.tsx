@@ -1,7 +1,6 @@
 // src/components/SpinButtonWithImage.jsx
-import React from 'react';
 
-const SpinButtonWithImage = ({ onClick } : any) => {
+const SpinButtonWithImage = ({ onClick }: any) => {
   return (
     // کانتینر اصلی برای قرارگیری در گوشه صفحه
     <div className="spin-button-container">
