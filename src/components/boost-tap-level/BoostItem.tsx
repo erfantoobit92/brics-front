@@ -4,6 +4,7 @@ import React from "react";
 import { FaLock, FaCheckCircle, FaCoins } from "react-icons/fa";
 import { motion } from "framer-motion";
 import type { BoostLevelData } from "../../api";
+import { useTranslation } from "react-i18next";
 
 interface BoostItemProps {
   boost: BoostLevelData;
@@ -13,29 +14,30 @@ interface BoostItemProps {
 
 const BoostItem: React.FC<BoostItemProps> = ({ boost, onUpgrade, isUpgrading }) => {
   const isNextLevel = !boost.isUnlocked && !boost.isCurrent;
-  
+    const { t } = useTranslation();
+
   // تعیین وضعیت دکمه
   let buttonState: 'current' | 'unlocked' | 'locked' | 'upgradeable' = 'locked';
-  let buttonText = "Locked";
+  let buttonText = t("locked");
   let buttonIcon = <FaLock />;
 
   if (boost.isCurrent) {
     buttonState = 'current';
-    buttonText = "Current";
+    buttonText = t("current");
     buttonIcon = <FaCheckCircle className="text-green-400" />;
   } else if (boost.isUnlocked) {
     buttonState = 'unlocked';
-    buttonText = "Unlocked";
+    buttonText = t("unlocked");
     buttonIcon = <FaCheckCircle className="text-gray-400" />;
   } else if (isNextLevel && boost.canAfford) {
     buttonState = 'upgradeable';
-    buttonText = "Upgrade";
+    buttonText = t("upgrade");
     buttonIcon = <FaCoins />;
   }
 
   const buttonClasses = {
-    current: "bg-green-500/20 text-green-400 border-green-500",
-    unlocked: "bg-gray-700/30 text-gray-400 border-gray-600",
+    current: "bg-green-500 text-white border-green-500",
+    unlocked: "bg-yellow-500 hover:bg-yellow-600 text-black border-yellow-600 font-bold",
     locked: "bg-gray-800/50 text-gray-500 border-gray-700 cursor-not-allowed",
     upgradeable: "bg-yellow-500 hover:bg-yellow-600 text-black border-yellow-600 font-bold",
   };
@@ -45,17 +47,21 @@ const BoostItem: React.FC<BoostItemProps> = ({ boost, onUpgrade, isUpgrading }) 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: boost.level * 0.05 }}
-      className="flex items-center justify-between w-full p-4 bg-black/20 backdrop-blur-sm rounded-xl border border-white/10 mb-3"
+      className="flex items-center justify-between w-full p-4  backdrop-blur-sm rounded-full border border-white/10 mb-3"
     >
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-purple-800/50 rounded-lg flex items-center justify-center text-2xl font-bold">
+        <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-2xl font-bold">
           {boost.level}
         </div>
         <div>
-          <p className="font-bold text-lg">Tap Level {boost.level}</p>
+          <p className="font-bold text-lg">{t('tap_level')} {boost.level}</p>
           <div className="flex items-center gap-2 text-yellow-400">
-            <FaCoins />
-            <span>{boost.cost.toLocaleString()}</span>
+           <img
+                  src="/images/coin-gold.png"
+                  alt="brics"
+                  className="w-4 h-4"
+                />
+            <span>{ boost.cost == 0 ? t('free') :boost.cost.toLocaleString()}</span>
           </div>
         </div>
       </div>
@@ -64,10 +70,9 @@ const BoostItem: React.FC<BoostItemProps> = ({ boost, onUpgrade, isUpgrading }) 
         whileTap={{ scale: 0.95 }}
         disabled={buttonState !== 'upgradeable' || isUpgrading}
         onClick={buttonState === 'upgradeable' ? onUpgrade : undefined}
-        className={`px-4 py-2 rounded-lg border text-sm transition-colors duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${buttonClasses[buttonState]}`}
+        className={`px-4 py-2 rounded-full border text-sm transition-colors duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${buttonClasses[buttonState]}`}
       >
-        {isUpgrading && buttonState === 'upgradeable' ? '...' : buttonIcon}
-        {isUpgrading && buttonState === 'upgradeable' ? 'Upgrading' : buttonText}
+        {isUpgrading && buttonState === 'upgradeable' ? t('upgrading') : buttonText}
       </motion.button>
     </motion.div>
   );

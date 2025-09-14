@@ -1,0 +1,213 @@
+/* src/components/spin-wheel/SpinWheel.css */
+
+.wheel-container {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.1));
+}
+
+.spin-marker {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 60px;
+  background-color: #f97316; /* Orange */
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  z-index: 10;
+  border-bottom: 5px solid #ea580c;
+}
+.spin-marker::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  background-color: white;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.wheel {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 10px solid white;
+  background: conic-gradient(
+    from 90deg,
+    white 0deg 22.5deg,
+    orange 22.5deg 67.5deg,
+    white 67.5deg 112.5deg,
+    orange 112.5deg 157.5deg,
+    white 157.5deg 202.5deg,
+    orange 202.5deg 247.5deg,
+    white 247.5deg 292.5deg,
+    orange 292.5deg 337.5deg,
+    white 337.5deg 360deg /* اون 22.5 اضافی که گفتی */
+  );
+  overflow: hidden;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+  /* transform: rotate(0deg); Initial state */
+}
+
+/* انیمیشن چرخش نامحدود */
+.wheel.spinning {
+  animation: spin-infinite 0.5s linear infinite;
+}
+@keyframes spin-infinite {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.wheel-section {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  transform-origin: bottom right;
+  transform: rotate(calc(360deg / var(--total) * var(--i)));
+  clip-path: polygon(10% 0, 100% 0, 100% 100%, 0 100%); /* Add a slight gap */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+  padding: 5px;
+}
+
+.wheel-item-content {
+  transform: rotate(calc(360deg / var(--total) / 2 + -67deg)) !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: -13px;
+}
+.wheel-item-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+.wheel-item-value {
+  color: #581c87; /* Dark Purple */
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.wheel-center {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  background-color: #f97316;
+  border-radius: 50%;
+  border: 8px solid white; /* Bright Purple */
+  box-shadow: 0 0 0 5px #f97316, 0 0 10px rgba(0, 0, 0, 0.2);
+  z-index: 5;
+}
+
+/* --- دکمه SPIN با انیمیشن‌های خفن --- */
+.spin-button {
+  position: relative;
+  padding: 1rem 3rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: white;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 5px 15px rgba(234, 88, 12, 0.4);
+  transition: all 0.2s ease;
+  overflow: hidden;
+  z-index: 1;
+  animation: button-pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.spin-button .text {
+  position: relative;
+  z-index: 2;
+}
+
+.spin-button:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(234, 88, 12, 0.5);
+}
+
+.spin-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  animation: none;
+  box-shadow: none;
+}
+
+/* انیمیشن Pulse برای دکمه */
+@keyframes button-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* انیمیشن Sparkle برای دکمه */
+.spin-button .sparkle {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.sparkle::before {
+  content: "";
+  position: absolute;
+  width: 80px;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.5);
+  transform: translateX(-100px) skewX(-20deg);
+  animation: sparkle-move 2s ease-in-out infinite;
+  filter: blur(10px);
+}
+@keyframes sparkle-move {
+  0% {
+    transform: translateX(-100px) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(250px) skewX(-20deg);
+  }
+}
+
+/* --- تایمر شمارش معکوس --- */
+.countdown-timer-container {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.timer-box {
+  background-color: #f3f4f6;
+  padding: 10px 15px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.timer-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #f97316;
+  line-height: 1;
+}
+
+.timer-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+}

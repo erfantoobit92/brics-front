@@ -6,12 +6,16 @@ import en from './locales/en.json';
 import fa from './locales/fa.json';
 import ar from './locales/ar.json';
 import zh from './locales/zh.json';
+import ru from './locales/ru.json';
+import hi from './locales/hi.json';
 
 const resources = {
   en: { ...en },
   fa: { ...fa },
   ar: { ...ar },
   zh: { ...zh },
+  ru: { ...ru },
+  hi: { ...hi },
 };
 
 i18n

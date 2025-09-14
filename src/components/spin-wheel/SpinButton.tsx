@@ -1,4 +1,5 @@
 // src/components/SpinButtonWithImage.jsx
+import "./SpinButton.css";
 
 const SpinButtonWithImage = ({ onClick }: any) => {
   return (

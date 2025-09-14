@@ -142,3 +142,46 @@ export const Api_Upgrade_Boost = (): Promise<{
 }> => {
   return Axios_Api.post('/boosts/upgrade');
 };
+
+
+export const SpinRewardType = {
+  COIN: "coin",
+  BRICS: "brics",
+  EMPTY: "empty",
+} as const;
+
+export type SpinRewardType = (typeof SpinRewardType)[keyof typeof SpinRewardType];
+
+
+export interface SpinWheelItem {
+  id: number;
+  label: string;
+  type: SpinRewardType;
+  value: number;
+  weight: number;
+  isActive: boolean;
+}
+
+// وضعیت گردونه رو از سرور می‌گیره
+export const Api_Get_Spin_Status = (): Promise<{
+  data: {
+    canSpin: boolean;
+    nextSpinAvailableAt: string | null; // تاریخ به صورت ISO string میاد
+    items: SpinWheelItem[];
+  };
+}> => {
+  return Axios_Api.get('/spin-wheel/status');
+};
+
+// درخواست چرخش گردونه رو به سرور می‌فرسته
+export const Api_Post_Spin = (): Promise<{
+  data: {
+    success: true;
+    wonPrize: SpinWheelItem;
+    newBalance: number;
+    newBricsBalance: number;
+    newEnergy: number;
+  };
+}> => {
+  return Axios_Api.post('/spin-wheel/spin');
+};

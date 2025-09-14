@@ -6,7 +6,18 @@ const languages = [
   { code: "fa", name: "فارسی", flag: "🇮🇷" },
   { code: "ar", name: "العربية", flag: "🇸🇦" },
   { code: "zh", name: "中文", flag: "🇨🇳" },
+  { code: "ru", name: "Русский", flag: "🇷🇺" }, // روسی
+  { code: "hi", name: "हिन्दी", flag: "🇮🇳" }, // هندی
 ];
+
+const languageFonts: Record<string, string> = {
+  en: "'Noto Sans', sans-serif",
+  ru: "'Noto Sans', sans-serif",
+  fa: "'Noto Sans Arabic', sans-serif",
+  ar: "'Noto Sans Arabic', sans-serif",
+  hi: "'Noto Sans Devanagari', sans-serif",
+  zh: "'Noto Sans SC', sans-serif",
+};
 
 interface LanguageSelectorProps {
   onLanguageSelect: () => void;
@@ -19,14 +30,20 @@ const LanguageSelector = ({ onLanguageSelect }: LanguageSelectorProps) => {
     i18n.changeLanguage(langCode);
     localStorage.setItem("userHasSelectedLanguage", "true");
 
+    const font = languageFonts[langCode] || "'Noto Sans', sans-serif";
+    document.body.style.fontFamily = font;
+
     onLanguageSelect();
   };
 
   return (
     // لایه پس‌زمینه که کل صفحه رو می‌پوشونه
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
+    <div
+      style={{ backgroundImage: `url('/images/bg.png')` }}
+      className="fixed inset-0 z-50 bg-cover bg-center flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm overflow-y-auto pb-26"
+    >
       {/* کانتینر اصلی دیالوگ با انیمیشن */}
-      <div className="bg-gradient-to-br from-gray-800 to-black border border-gray-700 rounded-2xl shadow-lg p-6 w-11/12 max-w-sm text-white transform transition-all animate-fade-in-up">
+      <div className="bg-white/30 backdrop-blur-md border border-white/10 rounded-2xl shadow-lg p-6 w-11/12 max-w-sm text-white transform transition-all animate-fade-in-up ">
         {/* هدر دیالوگ */}
         <div className="text-center mb-6">
           <h2 className="text-2xl font-bold tracking-wider">

@@ -7,11 +7,12 @@ import { Api_Get_Game_State, Api_Post_Taps } from "../api";
 import { FaRocket } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
 import { FaBolt } from "react-icons/fa6";
-import SpinButton from "../components/SpinButton";
+import SpinButton from "../components/spin-wheel/SpinButton";
 import { useTranslation } from "react-i18next";
 import TapPageSkeleton from "../components/TapPageSkeleton";
 import BoostModal from "../components/boost-tap-level/BoostModal";
 import { MAX_Tap_Level } from "../constants";
+import SpinWheelModal from "../components/spin-wheel/SpinWheelModal"; // <-- مودال گردونه رو ایمپورت کن
 
 interface FloatingTextData {
   id: number;
@@ -32,6 +33,7 @@ const TapPage = () => {
 
   const [floatingTexts, setFloatingTexts] = useState<FloatingTextData[]>([]);
   const [isBoostModalOpen, setIsBoostModalOpen] = useState(false); // <-- state جدید برای مودال
+  const [isSpinModalOpen, setIsSpinModalOpen] = useState(false);
 
   const tapsQueue = useRef<number>(0);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null); // <--- CHANGE: تایمر دیبانس
@@ -102,7 +104,7 @@ const TapPage = () => {
 
   const handleTap = (event: React.MouseEvent<HTMLDivElement>) => {
     if (energy < tapLevel) return; // <--- FIX: شرط انرژی رو درست کردم
-    setEnergy((prev) => prev - tapLevel);
+    setEnergy((prev) => prev - 1);
     setBalance((prev) => (Number(prev) + tapLevel).toString());
 
     tapsQueue.current += 1;
@@ -130,8 +132,16 @@ const TapPage = () => {
 
   const energyPercentage = (energy / energyLimit) * 100;
 
+  const handleCloseSpinModal = (didSpin: boolean = false) => {
+    setIsSpinModalOpen(false);
+    // اگر چرخش انجام شده بود، اطلاعات کاربر رو دوباره بگیر
+    if (didSpin) {
+      fetchInitialState();
+    }
+  };
+
   const handleSpinClick = () => {
-    console.log("Spin button clicked!");
+    setIsSpinModalOpen(true); // <-- مودال رو باز میکنه
   };
 
   if (isLoading) {
@@ -252,6 +262,7 @@ const TapPage = () => {
         </div>
       </footer>
       <BoostModal isOpen={isBoostModalOpen} onClose={handleCloseBoostModal} />
+      <SpinWheelModal isOpen={isSpinModalOpen} onClose={handleCloseSpinModal} />
     </div>
   );
 };
