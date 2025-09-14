@@ -3,12 +3,10 @@ import TaskItem from "../components/TaskItem";
 import { motion } from "framer-motion";
 import { ClipLoader } from "react-spinners";
 import { Toaster } from "react-hot-toast";
-import { useTranslation } from "react-i18next"; // <<-- برای ترجمه
+import { useTranslation } from "react-i18next"; 
 
 import { Api_Get_Tasks } from "../api";
-// import candyIcon from '../assets/images/candy.png'; // <<-- آیکون اصلی
 
-// انیمیشن برای کل لیست (بدون تغییر)
 const listVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -20,12 +18,15 @@ const listVariants = {
 const TasksPage = () => {
   const { t } = useTranslation();
 
-  // ==================== منطق کد شما (کاملاً دست‌نخورده) ====================
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  let didfetchData = false;
   const fetchTasks = async () => {
+    if (didfetchData) return;
+    didfetchData = true;
+
     try {
       setLoading(true);
       const response = await Api_Get_Tasks();
@@ -46,7 +47,6 @@ const TasksPage = () => {
   useEffect(() => {
     fetchTasks();
   }, []);
-  // ==================== پایان منطق کد شما ====================
 
   return (
     <div

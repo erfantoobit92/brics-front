@@ -1,19 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { io, Socket } from "socket.io-client";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppContext } from "../context/AppContext";
 import FloatingText from "../components/FloatingText";
-import { Main_API_URL } from "../constants";
+import { Api_Get_Game_State, Api_Post_Taps } from "../api";
 
-// آیکون‌ها
 import { FaRocket } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
 import { FaBolt } from "react-icons/fa6";
 import SpinButton from "../components/SpinButton";
 import { useTranslation } from "react-i18next";
-
-// آدرس عکس‌ها - اینا رو با آدرس عکس‌های خودت جایگزین کن
-// import candyIcon from '../assets/images/candy.png'; // مثلا
+import TapPageSkeleton from "../components/TapPageSkeleton";
+import BoostModal from "../components/boost-tap-level/BoostModal";
+import { MAX_Tap_Level } from "../constants";
 
 interface FloatingTextData {
   id: number;
@@ -25,47 +23,94 @@ interface FloatingTextData {
 const TapPage = () => {
   const { t } = useTranslation();
   const { token, user } = useAppContext();
-  const [socket, setSocket] = useState<Socket | null>(null);
 
-  // Game state
   const [balance, setBalance] = useState<string>("0");
+  const [tapLevel, setTapLevel] = useState<number>(1);
   const [energy, setEnergy] = useState<number>(1000);
   const [energyLimit, setEnergyLimit] = useState<number>(1000);
+  const [isLoading, setIsLoading] = useState(true); // برای نمایش لودینگ اولیه
 
   const [floatingTexts, setFloatingTexts] = useState<FloatingTextData[]>([]);
+  const [isBoostModalOpen, setIsBoostModalOpen] = useState(false); // <-- state جدید برای مودال
 
-  // تمام منطق سوکت مثل قبل باقی میمونه
-  useEffect(() => {
-    if (!token) return;
-    const newSocket = io(Main_API_URL, { auth: { token } });
-    setSocket(newSocket);
-    newSocket.on("connect", () => console.log("WebSocket Connected!"));
-    newSocket.on("initial_state", (data) => {
-      setBalance(data.balance);
-      setEnergy(data.currentEnergy);
-      setEnergyLimit(data.energyLimit);
-    });
-    newSocket.on("update_state", (data) => {
+  const tapsQueue = useRef<number>(0);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null); // <--- CHANGE: تایمر دیبانس
+
+  const sendTapsToServer = useCallback(async () => {
+    if (tapsQueue.current === 0) return;
+
+    try {
+      const tapsToSend = tapsQueue.current;
+      tapsQueue.current = 0;
+
+      const { data } = await Api_Post_Taps(tapsToSend);
+
       if (data.success) {
         setBalance(data.balance);
         setEnergy(data.currentEnergy);
+      } else {
+        console.warn("Taps rejected by server:", data.message);
+        fetchInitialState();
+        // const { data: freshData } = await Api_Get_Game_State();
+        // setBalance(freshData.balance);
+        // setEnergy(freshData.currentEnergy);
+        // setEnergyLimit(freshData.energyLimit);
       }
-    });
+    } catch (error) {
+      console.error("Failed to sync taps:", error);
+    }
+  }, []);
+
+  const fetchInitialState = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const { data } = await Api_Get_Game_State();
+      setBalance(data.balance);
+      setEnergy(data.currentEnergy);
+      setEnergyLimit(data.energyLimit);
+      setTapLevel(data.tapLevel);
+    } catch (error) {
+      console.error("Failed to fetch initial state:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!token) return;
+
+    fetchInitialState();
+
+    // cleanup function: وقتی کاربر از صفحه خارج میشه
     return () => {
-      newSocket.off("initial_state");
-      newSocket.off("update_state");
-      newSocket.disconnect();
+      // تایمر دیبانس رو پاک می‌کنیم
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+      // هر تپی که در صف مونده رو قبل از خروج ارسال می‌کنیم
+      sendTapsToServer();
     };
-  }, [token]);
+  }, [token, fetchInitialState, sendTapsToServer]);
+
+  const handleCloseBoostModal = (didUpgrade: boolean = false) => {
+    setIsBoostModalOpen(false);
+    // اگر آپگریدی انجام شده بود، اطلاعات کاربر رو دوباره بگیر تا بالانس جدید نمایش داده بشه
+    if (didUpgrade) {
+      fetchInitialState();
+    }
+  };
 
   const handleTap = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (energy <= 0) return;
-    socket?.emit("tap", { count: 1 });
+    if (energy < tapLevel) return; // <--- FIX: شرط انرژی رو درست کردم
+    setEnergy((prev) => prev - tapLevel);
+    setBalance((prev) => (Number(prev) + tapLevel).toString());
+
+    tapsQueue.current += 1;
 
     const { clientX, clientY } = event;
     const newText: FloatingTextData = {
-      id: Date.now() + Math.random(), // Math.random برای جلوگیری از آی‌دی تکراری در کلیک‌های سریع
-      text: "+1",
+      id: Date.now() + Math.random(),
+      text: `+${tapLevel}`,
       x: clientX,
       y: clientY,
     };
@@ -73,15 +118,25 @@ const TapPage = () => {
     setTimeout(() => {
       setFloatingTexts((prev) => prev.filter((t) => t.id !== newText.id));
     }, 1500);
+
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    // یه تایمر جدید تنظیم کن که ۲ ثانیه دیگه تابع sendTapsToServer رو اجرا کنه
+    debounceTimer.current = setTimeout(() => {
+      sendTapsToServer();
+    }, 2000);
   };
 
   const energyPercentage = (energy / energyLimit) * 100;
 
   const handleSpinClick = () => {
     console.log("Spin button clicked!");
-    // اینجا منطق مربوط به گردونه شانس رو پیاده‌سازی کنید
-    // مثلا باز شدن یک مودال یا رفتن به صفحه‌ی گردونه
   };
+
+  if (isLoading) {
+    return <TapPageSkeleton />;
+  }
 
   return (
     <div
@@ -123,6 +178,7 @@ const TapPage = () => {
           </motion.button>
         </NavLink>
         <motion.button
+          onClick={() => setIsBoostModalOpen(true)} // <-- مودال رو باز میکنه
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="flex items-center gap-2 bg-gradient-to-r from-green-400 to-lime-500 text-black font-bold py-2 px-4 rounded-full shadow-lg shadow-green-500/50"
@@ -135,7 +191,7 @@ const TapPage = () => {
       {/* بخش اصلی: امتیاز و گربه */}
       <main className="flex-grow flex flex-col items-center justify-center pt-4 gap-5 z-10">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <img src="/images/coin.png" alt="Candy" className="w-12 h-12" />
+          <img src="/images/coin-gold.png" alt="Candy" className="w-12 h-12" />
           <span
             className="text-5xl font-extrabold tracking-tight"
             style={{ textShadow: "0px 4px 15px rgba(255, 255, 255, 0.3)" }}
@@ -185,7 +241,9 @@ const TapPage = () => {
               <SpinButton onClick={handleSpinClick} />
             </div>
             <div className="text-center">
-              <span className="font-bold text-sm">{t("level")} 6 / 100</span>
+              <span className="font-bold text-sm">
+                {t("level")} {tapLevel} / {MAX_Tap_Level}
+              </span>
               <div className="w-24 bg-black/30 h-2 rounded-full mt-1 overflow-hidden">
                 <div className="h-full bg-purple-500 w-1/4 rounded-full"></div>
               </div>
@@ -193,6 +251,7 @@ const TapPage = () => {
           </div>
         </div>
       </footer>
+      <BoostModal isOpen={isBoostModalOpen} onClose={handleCloseBoostModal} />
     </div>
   );
 };

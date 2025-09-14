@@ -5,10 +5,7 @@ import type { MiningStatusData } from "../pages/MiningPage";
 export const Axios_Api = axios.create({
   baseURL: Main_API_URL,
   headers: {
-    "bypass-tunnel-reminder": "194.146.93.248",
-    "x-lt-auth": "194.146.93.248",
-    // Accept: "*/*",
-    // Connection: "keep-alive",
+    "bypass-tunnel-reminder": "167.114.57.176",
   },
 });
 
@@ -33,29 +30,16 @@ export const Api_Login_With_Telegram = async (data: any) => {
     const response = await Axios_Api.post("/auth/login", data);
     return response.data;
   } catch (error) {
-    console.error("Authentication failed:", error);
     throw error;
   }
 };
 
 export const Api_Get_Profile = async () => {
-  try {
-    const response = await Axios_Api.get("/user/profile");
-    return response.data;
-  } catch (error) {
-    console.error("Failed to fetch profile:", error);
-    throw error;
-  }
+  return (await Axios_Api.get("/user/profile")).data;
 };
 
 export const Api_FetchFriends = async () => {
-  try {
-    const response = await Axios_Api.get("/user/referrals");
-    return response.data;
-  } catch (error) {
-    console.error("Failed to fetch profile:", error);
-    throw error;
-  }
+  return (await Axios_Api.get("/user/referrals")).data;
 };
 
 export const Api_Get_Mining_Status = (): Promise<
@@ -65,7 +49,11 @@ export const Api_Get_Mining_Status = (): Promise<
 };
 
 export const Api_Claim_Rewards = (): Promise<
-  AxiosResponse<{ newBricsBalance: number; claimedAmount: number }>
+  AxiosResponse<{
+    newBricsBalance: number;
+    claimedAmount: number;
+    newBalance: number;
+  }>
 > => {
   return Axios_Api.post("/mining/claim");
 };
@@ -118,4 +106,39 @@ export const Api_Connect_User_Wallet = (walletAddress: string) => {
 
 export const Api_Complete_Post_Story_Task = () => {
   return Axios_Api.post("/tasks/complete/post-story");
+};
+
+
+export const Api_Get_Game_State = () => {
+  return Axios_Api.get('/game/state');
+};
+
+export const Api_Post_Taps = (count: number) => {
+  return Axios_Api.post('/game/tap', { count });
+};
+
+
+export interface BoostLevelData {
+  id: number;
+  level: number;
+  cost: number;
+  isCurrent: boolean;
+  isUnlocked: boolean;
+  canAfford: boolean;
+}
+
+// تابع برای گرفتن لیست بوست‌ها
+export const Api_Get_Boosts = (): Promise<{ data: BoostLevelData[] }> => {
+  return Axios_Api.get('/boosts');
+};
+
+// تابع برای درخواست آپگرید
+export const Api_Upgrade_Boost = (): Promise<{
+  data: {
+    message: string;
+    newBalance: number;
+    newTapLevel: number;
+  };
+}> => {
+  return Axios_Api.post('/boosts/upgrade');
 };

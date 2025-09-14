@@ -180,7 +180,7 @@ const FriendsPage = () => {
                         alt="reward"
                         className="w-4 h-4"
                       />
-                      <span>+ {friend.rewarded || 0}</span>
+                      <span>+ {Number(friend.rewarded).toLocaleString() || 0}</span>
                     </div>
                   </motion.div>
                 ))

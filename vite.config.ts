@@ -7,7 +7,7 @@ export default defineConfig({
     host: true, // اجازه دسترسی از بیرون
     port: 5173, // یا همون پورتی که می‌خوای
     allowedHosts: [
-      "8c41a10a9477.ngrok-free.app",
+      "a0b5f8f0d0ca.ngrok-free.app",
       "erfuni.ir",
       "jemjoo.erfuni.ir",
     ],

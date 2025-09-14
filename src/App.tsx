@@ -5,6 +5,7 @@ import TapPage from "./pages/TapPage";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import FriendsPage from "./pages/FriendsPage"; // ایمپورت صفحه جدید
+import { init } from "@telegram-apps/sdk-react";
 
 import "./index.css";
 import ProfilePage from "./pages/ProfilePage";
@@ -19,10 +20,11 @@ function App() {
   const { i18n } = useTranslation();
 
   // چک می‌کنیم آیا زبانی قبلاً انتخاب شده یا نه
-  const [showLanguageSelector, setShowLanguageSelector] = useState(!localStorage.getItem('userHasSelectedLanguage'));
+  const [showLanguageSelector, setShowLanguageSelector] = useState(
+    !localStorage.getItem("userHasSelectedLanguage")
+  );
 
-
-    useEffect(() => {
+  useEffect(() => {
     document.documentElement.lang = i18n.language;
     document.documentElement.dir = i18n.dir(i18n.language);
   }, [i18n, i18n.language]);
@@ -31,11 +33,18 @@ function App() {
     setShowLanguageSelector(false);
   };
 
+  useEffect(() => {
+    init(); // SDK ready میشه
+  }, []);
 
-  const { isLoading, token } = useAppContext();
+  const { isLoading, token, errorText } = useAppContext();
 
   if (isLoading) {
     return <LoadingSpinner />;
+  }
+
+  if (errorText != null) {
+    return <div className="text-center mt-20 text-red-500">{errorText}</div>;
   }
 
   if (!token) {
@@ -47,16 +56,14 @@ function App() {
     );
   }
 
-
   return (
     <Router>
-            {showLanguageSelector && (
-              <LanguageSelector onLanguageSelect={handleLanguageSelected} />
-            )}
+      {showLanguageSelector && (
+        <LanguageSelector onLanguageSelect={handleLanguageSelected} />
+      )}
       <div className="h-screen w-screen flex flex-col">
         <main className="flex-grow overflow-y-auto">
           <Routes>
-
             <Route path="/" element={<TapPage />} />
             <Route path="/mine" element={<MiningPage />} />
             <Route path="/friends" element={<FriendsPage />} />

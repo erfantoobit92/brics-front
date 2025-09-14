@@ -1,12 +1,13 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 
-import { Api_Get_Profile, Api_Login_With_Telegram } from "../api";
+import { Api_Login_With_Telegram } from "../api";
 import type { User } from "@telegram-apps/sdk";
 import { useRawInitData, useLaunchParams } from "@telegram-apps/sdk-react";
 
 interface AppContextType {
   token: string | null;
+  errorText: string | null;
   isLoading: boolean;
   telegramUser: User | undefined;
   user: LoginUserInterface | null;
@@ -14,11 +15,23 @@ interface AppContextType {
 }
 
 interface LoginUserInterface {
-  photoUrl?: string;
+  id: number;
+  telegramId: string;
   firstName?: string;
   lastName?: string;
-  username?: string;
-  walletAddress?: string;
+  photoUrl?: string;
+  walletAddress: string | null;
+  balance?: number;
+  bricsBalance?: number;
+  tapLevel?: number;
+  energyLimit?: number;
+  currentEnergy?: number;
+  lastEnergyRefill?: string;
+  createdAt: string;
+  referrerId: number | null;
+  isPremium: boolean;
+  unclaimedMiningReward?: number;
+  lastMiningInteraction?: string;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -33,6 +46,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const [user, setUser] = useState<LoginUserInterface | null>(null);
+  const [errorText, setErrorText] = useState<string | null>(null);
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
@@ -42,35 +56,40 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const didLoginCall = useRef(false);
   useEffect(() => {
     const authenticate = async () => {
       // localStorage.clear();
-
       const initDataString = rawInitData;
       const startParamString = launchParams.ref;
       if (initDataString) {
-        if (!token) {
-          try {
-            const { access_token, user } = await Api_Login_With_Telegram({
-              initData: initDataString,
-              startParam: startParamString as string | undefined,
-              isPremium: launchParams.tgWebAppData?.user?.is_premium ?? false,
-            });
-            localStorage.setItem("token", access_token);
-            setToken(access_token);
-            setUser(user);
-          } catch (error) {
-            alert(JSON.stringify(error));
-            console.error("Failed to login", error);
-          } finally {
-            setIsLoading(false);
-          }
-        } else if (user == null) {
-
-          const data = await Api_Get_Profile();
-          setUser(data);
+        // if (!token) {
+        if (didLoginCall.current) return;
+        didLoginCall.current = true;
+        try {
+          const { access_token, user } = await Api_Login_With_Telegram({
+            initData: initDataString,
+            startParam: startParamString as string | undefined,
+            isPremium: launchParams.tgWebAppData?.user?.is_premium ?? false,
+          });
+          localStorage.setItem("token", access_token);
+          setToken(access_token);
+          setUser(user);
+        } catch (error) {
+          setErrorText(`Failed to login : ${error}`);
+        } finally {
           setIsLoading(false);
         }
+        // } else if (user == null) {
+        //   try {
+        //     const data = await Api_Get_Profile();
+        //     setUser(data);
+        //   } catch (error) {
+        //     setErrorText(`Failed to Get User Profile : ${error}`);
+        //   } finally {
+        //     setIsLoading(false);
+        //   }
+        // }
       } else {
         setIsLoading(false);
       }
@@ -82,7 +101,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [rawInitData, launchParams, token]);
 
   const telegramUser = launchParams.tgWebAppData?.user;
-  const value = { token, isLoading, telegramUser, user, setUser };
+  const value = { token, isLoading, telegramUser, user, setUser, errorText };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

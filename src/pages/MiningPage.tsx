@@ -1,11 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
-// --- آیکون‌ها (بدون تغییر)
 import { FaBolt, FaSpinner } from "react-icons/fa";
-import { RiCopperCoinFill } from "react-icons/ri";
 
-// --- API ها (بدون تغییر)
 import {
   Api_Claim_Rewards,
   Api_Get_Mining_Status,
@@ -15,9 +11,8 @@ import {
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { ClipLoader } from "react-spinners";
+import toast, { Toaster } from "react-hot-toast";
 
-
-// --- تایپ‌ها (بدون تغییر)
 interface CombinedHardware {
   id: number | null;
   hardwareId: number;
@@ -94,7 +89,13 @@ const HardwareCard: React.FC<HardwareCardProps> = ({
 
       <h3 className="font-bold text-md">{hardware.name[i18n.language]}</h3>
       <p className="text-xs text-gray-400 mb-2">
-        {hardware.isOwned ? `${t("level")} ${hardware.level}` : t("buy")}
+        {hardware.isOwned
+          ? `${t("level")} ${hardware.level} | ${t("speed")} ${Number(
+              hardware.currentMiningRatePerHour ?? 0
+            ).toLocaleString(undefined, {
+              maximumFractionDigits: 6,
+            })}`
+          : t("buy")}
       </p>
 
       {/* نرخ ماینینگ */}
@@ -110,12 +111,17 @@ const HardwareCard: React.FC<HardwareCardProps> = ({
       {hardware.isOwned ? (
         <motion.button
           onClick={() =>
-            hardware.hardwareId && !isLoading && onUpgrade(hardware.hardwareId)
+            hardware.hardwareId &&
+            upgradingId == null &&
+            buyingId == null &&
+            onUpgrade(hardware.hardwareId)
           }
-          disabled={hardware.isMaxLevel || isLoading}
+          disabled={
+            hardware.isMaxLevel || upgradingId != null || buyingId != null
+          }
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md shadow-blue-500/30 py-3"
+          className="!mt-auto w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md shadow-blue-500/30 py-3"
         >
           {isLoading ? (
             <FaSpinner className="animate-spin" />
@@ -133,11 +139,17 @@ const HardwareCard: React.FC<HardwareCardProps> = ({
         </motion.button>
       ) : (
         <motion.button
-          onClick={() => !isLoading && onBuy(hardware.hardwareId)}
-          disabled={isLoading || hardware.buyCost === null}
+          onClick={() =>
+            upgradingId == null &&
+            buyingId == null &&
+            onBuy(hardware.hardwareId)
+          }
+          disabled={
+            upgradingId != null || buyingId != null || hardware.buyCost === null
+          }
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md shadow-blue-500/30"
+          className="!mt-auto w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md shadow-blue-500/30"
         >
           {isLoading ? (
             <FaSpinner className="animate-spin" />
@@ -154,11 +166,7 @@ const HardwareCard: React.FC<HardwareCardProps> = ({
   );
 };
 
-// ===================================================================
-// ==================  MAIN PAGE (بازطراحی شده)  ====================
-// ===================================================================
 const MiningPage: React.FC = () => {
-  // ==================== منطق کد شما (بدون هیچ تغییری) ====================
   const [data, setData] = useState<MiningStatusData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
@@ -179,7 +187,10 @@ const MiningPage: React.FC = () => {
     }
   }, []);
 
+  const didFetchInitData = useRef(false);
   useEffect(() => {
+    if (didFetchInitData.current) return;
+    didFetchInitData.current = true;
     fetchData();
   }, [fetchData]);
 
@@ -200,6 +211,20 @@ const MiningPage: React.FC = () => {
   }, [data?.totalMiningRatePerHour]);
 
   const handleUpgrade = async (userHardwareId: number): Promise<void> => {
+    let findedHardware = data?.hardwares.find(
+      (m) => m.hardwareId == userHardwareId
+    );
+    if (
+      (data?.balance ?? 0) != 0 &&
+      findedHardware?.nextLevelUpgradeCost != null &&
+      data!.balance < findedHardware?.nextLevelUpgradeCost
+    ) {
+      console.log(t(`You_dont_have_enough_coins`));
+
+      toast.error(t(`You_dont_have_enough_coins`));
+
+      return;
+    }
     setUpgradingId(userHardwareId);
     try {
       await Api_Upgrade_Hardware(userHardwareId);
@@ -214,8 +239,27 @@ const MiningPage: React.FC = () => {
   const handleClaim = async (): Promise<void> => {
     setIsClaiming(true);
     try {
-      await Api_Claim_Rewards();
-      await fetchData();
+      const result = await Api_Claim_Rewards();
+      toast.success(
+        t(`mining_reward`, {
+          amount: Number(result.data.claimedAmount).toLocaleString(undefined, {
+            maximumFractionDigits: 6,
+          }),
+        })
+      );
+
+      setData((prev) => {
+        if (!prev) return prev; // یا می‌تونی یه مقدار اولیه درست برگردونی
+
+        return {
+          ...prev,
+          bricsBalance: result.data.newBricsBalance,
+          balance: result.data.newBalance,
+          unclaimedMiningReward: 0,
+        };
+      });
+      // setData({...data ,...{bricsBalance:newBricsBalance,balance:newBalance}})
+      // await fetchData();
     } catch (err: any) {
       alert(err.response?.data?.message || t("claim_failed"));
     } finally {
@@ -234,13 +278,9 @@ const MiningPage: React.FC = () => {
       setBuyingId(null);
     }
   };
-  // ==================== پایان منطق کد شما ====================
 
-  // State جدید برای مدیریت تب‌ها
   const [activeTab, setActiveTab] = useState("mine");
 
-  // استیت موقت برای مپ کردن عکس‌ها به سخت‌افزارها
-  // در یک پروژه واقعی، این اطلاعات باید از API بیاد
   const hardwareImages: { [key: number]: string } = {
     1: "/images/character.png", // hardwareId: 1
     2: "/images/character.png", // hardwareId: 2
@@ -271,8 +311,12 @@ const MiningPage: React.FC = () => {
     );
   }
 
-  const unlockedHardwares = data.hardwares.filter((hw) => hw.isOwned);
-  const lockedHardwares = data.hardwares.filter((hw) => !hw.isOwned);
+  const unlockedHardwares = data.hardwares.filter(
+    (hw) => hw.isOwned && hw.hardwareId != 1
+  );
+  const lockedHardwares = data.hardwares.filter(
+    (hw) => !hw.isOwned && hw.hardwareId != 1
+  );
 
   return (
     <motion.div
@@ -281,6 +325,8 @@ const MiningPage: React.FC = () => {
       style={{ backgroundImage: `url('/images/bg.png')` }}
       className="w-full h-full bg-cover bg-center text-white overflow-hidden"
     >
+      <Toaster position="top-center" />
+
       <div className="flex flex-col p-4 !overflow-y-auto scroll-hidden h-[calc(100%-110px)]">
         {/* ========== هدر: امتیازات و دکمه Claim ========== */}
         <header className="flex-shrink-0">
@@ -366,11 +412,13 @@ const MiningPage: React.FC = () => {
                     </p>
                   </div>
                   <div className="mt-2 p-4 bg-black/20 rounded-lg w-full max-w-xs">
-                    <p className="text-gray-400 text-sm">
-                      {t("balance_for_upgrade")}
-                    </p>
+                    <p className="text-gray-400 text-sm">{t("coin_balance")}</p>
                     <p className="text-2xl font-bold text-yellow-300 flex items-center justify-center gap-2">
-                      <RiCopperCoinFill />{" "}
+                      <img
+                        src="/images/coin-gold.png"
+                        alt="reward"
+                        className="w-4 h-4"
+                      />{" "}
                       {Math.floor(data.balance).toLocaleString()}
                     </p>
                   </div>
@@ -379,7 +427,7 @@ const MiningPage: React.FC = () => {
 
               {(activeTab === "upgrade" || activeTab === "buy") && (
                 <motion.div
-                  className="grid grid-cols-2 gap-4 pb-24"
+                  className="grid grid-cols-2 gap-4 pb-4"
                   variants={{
                     visible: { transition: { staggerChildren: 0.05 } },
                   }}
@@ -405,6 +453,15 @@ const MiningPage: React.FC = () => {
                   ))}
                 </motion.div>
               )}
+              {(activeTab === "upgrade" || activeTab === "buy") &&
+                (activeTab === "upgrade" ? unlockedHardwares : lockedHardwares)
+                  .length == 0 && (
+                  <div className="flex items-center justify-center w-full py-15 text-lg font-bold">
+                    {activeTab === "upgrade"
+                      ? t("No_hardware_found_for_upgrade")
+                      : t("No_hardware_found_for_purchase")}
+                  </div>
+                )}
             </motion.div>
           </AnimatePresence>
         </main>

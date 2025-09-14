@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
 import { ClipLoader } from "react-spinners";
@@ -13,35 +13,9 @@ import {
 import { useAppContext } from "../context/AppContext";
 import { Telegram_Bot_Username } from "../constants";
 import { useTranslation } from "react-i18next";
+import { openTelegramLink } from "@telegram-apps/sdk-react";
+import { getTaskIconUrl, openWalletAddAsset } from "../utils";
 
-export const TaskType = {
-  VISIT_WEBSITE: "VISIT_WEBSITE",
-  FOLLOW_SOCIAL: "FOLLOW_SOCIAL",
-  WATCH_YOUTUBE: "WATCH_YOUTUBE",
-  JOIN_TELEGRAM_CHANNEL: "JOIN_TELEGRAM_CHANNEL",
-  BOOST_TELEGRAM_CHANNEL: "BOOST_TELEGRAM_CHANNEL",
-  POST_TELEGRAM_STORY: "POST_TELEGRAM_STORY",
-  ADD_LOGO_TO_PROFILE_NAME: "ADD_LOGO_TO_PROFILE_NAME",
-  CONNECT_WALLET: "CONNECT_WALLET",
-  ON_CHAIN_TRANSACTION: "ON_CHAIN_TRANSACTION",
-  ADD_TOKEN_TO_WALLET: "ADD_TOKEN_TO_WALLET",
-} as const;
-export type TaskType = (typeof TaskType)[keyof typeof TaskType];
-
-const taskIcons: Record<TaskType, string> = {
-  VISIT_WEBSITE: "/tasks/website.png",
-  FOLLOW_SOCIAL: "/tasks/instagram.png",
-  WATCH_YOUTUBE: "/tasks/youtube.png",
-  JOIN_TELEGRAM_CHANNEL: "/tasks/telegram.png",
-  BOOST_TELEGRAM_CHANNEL: "/tasks/boost-telegram.png",
-  POST_TELEGRAM_STORY: "/tasks/story.png",
-  ADD_LOGO_TO_PROFILE_NAME: "/tasks/website.png",
-  CONNECT_WALLET: "/tasks/connect-wallet.png",
-  ON_CHAIN_TRANSACTION: "/tasks/transaction.png",
-  ADD_TOKEN_TO_WALLET: "/tasks/add-token-wallet.png",
-};
-
-// انیمیشن برای آیتم‌ها (بدون تغییر)
 const itemVariants = {
   hidden: { y: 20, opacity: 0 },
   visible: { y: 0, opacity: 1, transition: { type: "spring" as const } },
@@ -49,20 +23,22 @@ const itemVariants = {
 };
 
 const TaskItem = ({ task, onTaskUpdate }: any) => {
-  const { i18n} = useTranslation();
-  
-  // ==================== منطق کد شما (کاملاً دست‌نخورده) ====================
+  const { i18n } = useTranslation();
+
   const [isProcessing, setIsProcessing] = useState(false);
   const { user, setUser } = useAppContext();
   const wallet = useTonWallet();
   const [tonConnectUI] = useTonConnectUI();
 
+  const didConnectWallet = useRef(false);
   useEffect(() => {
     const handleConnection = async () => {
+      if (didConnectWallet.current) return;
+      didConnectWallet.current = true;
       if (
         wallet &&
         task.type === "CONNECT_WALLET" &&
-        user?.walletAddress == null
+        task.status != "COMPLETED"
       ) {
         const address = wallet.account.address;
         toast.success("Wallet connected!");
@@ -73,6 +49,7 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
               `Reward claimed! New balance: ${response.data.newBalance.toLocaleString()}`
             );
           }
+          didConnectWallet.current = false;
           setUser({
             firstName: user?.firstName,
             lastName: user?.lastName,
@@ -89,91 +66,69 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
     };
     handleConnection();
   }, [wallet]);
+
+  const handleAddLogoTOProfileAction = async () => {
+    try {
+      await Api_Claim_Task_Reward(task.id);
+      toast.success(`+${task.rewardCoin.toLocaleString()}! Task Verified.`);
+      onTaskUpdate();
+      return;
+    } catch (e: any) {
+      setIsProcessing(false);
+
+      if (e.status === 400) {
+        // Show BottomSheet
+      }
+    }
+  };
+
   const handleAction = async () => {
     setIsProcessing(true);
     try {
       if (task.status === "PENDING") {
         if (task.type === "ADD_LOGO_TO_PROFILE_NAME") {
-          await Api_Claim_Task_Reward(task.id);
-          toast.success(`+${task.rewardCoin.toLocaleString()}! Task Verified.`);
+          handleAddLogoTOProfileAction();
+        } else {
+          await Api_Start_Task(task.id);
+          if (task.metadata.url || task.metadata.channelUrl) {
+            window.open(
+              task.metadata.url || task.metadata.channelUrl,
+              "_blank"
+            );
+          }
+          toast.success("Task started! Come back to claim your reward.");
           onTaskUpdate();
-          return;
         }
-        // if (task.type === "JOIN_TELEGRAM_CHANNEL") {
-        //   window.open(
-        //     `https://t.me/${(task.metadata.channelId as String).slice(
-        //       1,
-        //       task.metadata.channelId.length
-        //     )}`
-        //   );
-        //   return;
-        // }
-        await Api_Start_Task(task.id);
-        if (task.metadata.url || task.metadata.channelUrl) {
-          window.open(task.metadata.url || task.metadata.channelUrl, "_blank");
-        }
-        toast.success("Task started! Come back to claim your reward.");
-        onTaskUpdate();
       } else if (task.status === "STARTED") {
         await Api_Claim_Task_Reward(task.id);
         toast.success(`+${task.rewardCoin.toLocaleString()}! Reward Claimed.`);
         onTaskUpdate();
       }
     } catch (error: any) {
+      console.log(error);
+
       toast.error(error.response?.data?.message || "Action failed.");
     } finally {
       setIsProcessing(false);
     }
   };
+
   const handleAddTokenToWallet = async () => {
-    const tokenAddress = task.metadata.tokenAddress;
-    const tokenSymbol = task.metadata.tokenSymbol;
-    const tokenDecimals = task.metadata.tokenDecimals;
-    const tokenImage = task.metadata.tokenImage;
-    if (typeof (window as any).ethereum === "undefined") {
-      navigator.clipboard
-        .writeText(tokenAddress)
-        .then(() => {
-          window.open(
-            `https://link.trustwallet.com/add_asset?asset=c56_t${tokenAddress}`,
-            "_blank"
-          );
-        })
-        .catch((err) => {
-          console.log("Failed to copy text:", err);
-        });
-      return;
-    }
     setIsProcessing(true);
     try {
-      const wasAdded = await (window as any).ethereum.request({
-        method: "wallet_watchAsset",
-        params: {
-          type: "ERC20",
-          options: {
-            address: tokenAddress,
-            symbol: tokenSymbol,
-            decimals: tokenDecimals,
-            image: tokenImage,
-          },
-        },
-      });
-      if (wasAdded) {
-        toast.success(
-          "Token added successfully! You can now claim your reward."
-        );
-        await Api_Start_Task(task.id);
-        onTaskUpdate();
-      } else {
-        toast.error("Token was not added.");
-      }
+      await Api_Start_Task(task.id);
+      onTaskUpdate();
+      setIsProcessing(false);
     } catch (error) {
       console.error("Error adding token:", error);
+      alert(error);
       toast.error("An error occurred while adding the token.");
     } finally {
       setIsProcessing(false);
+      openWalletAddAsset(task.metadata);
     }
   };
+
   const handleSendTransaction = async () => {
     if (!wallet) {
       tonConnectUI.openModal();
@@ -206,6 +161,7 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
       setIsProcessing(false);
     }
   };
+
   const handleJoinTelegramClaimReward = async () => {
     setIsProcessing(true);
     try {
@@ -215,21 +171,32 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
       onTaskUpdate();
     } catch (e: any) {
       setIsProcessing(false);
+      console.log("e.status", e.status);
+      console.log("task.type", task.type);
+      console.log("task.status", task.status);
 
       if (
         e.status === 400 &&
         task.type === "JOIN_TELEGRAM_CHANNEL" &&
         task.status === "PENDING"
       ) {
-        window.open(
+        openTelegramLink(
           `https://t.me/${(task.metadata.channelId as String).slice(
             1,
             task.metadata.channelId.length
           )}`
         );
+
+        // window.open(
+        //   `https://t.me/${(task.metadata.channelId as String).slice(
+        //     1,
+        //     task.metadata.channelId.length
+        //   )}`
+        // );
       }
     }
   };
+
   const handlePostStory = async () => {
     try {
       init();
@@ -244,41 +211,17 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
       alert(error);
     }
   };
-  // ==================== پایان منطق کد شما ====================
 
-  const detectSocialNetwork = (task: any) => {
-    if (
-      task.type != TaskType.FOLLOW_SOCIAL &&
-      taskIcons[task.type as TaskType]
-    ) {
-      return taskIcons[task.type as TaskType];
-    }
-    try {
-      const hostname = new URL(task.metadata.url).hostname.toLowerCase();
-
-      if (hostname.includes("instagram.com")) {
-        return "/tasks/instagram.png";
-      }
-
-      if (hostname.includes("x.com") || hostname.includes("twitter.com")) {
-        return "/tasks/twitter.png";
-      }
-
-      return "/tasks/social.png";
-    } catch (e) {
-      return "/tasks/social.png";
-    }
-  };
   const renderActionButton = () => {
     // >>  تمام منطق این تابع حفظ شده، فقط ظاهر دکمه‌ها در JSX تغییر کرده است  <<
 
     // حالت تکمیل شده
-    if (task.status === "COMPLETED") {
+    if (
+      task.status === "COMPLETED" ||
+      (task.type === "CONNECT_WALLET" && wallet)
+    ) {
       return (
         <img src="/images/check.png" alt="Completed" className="w-8 h-8" />
-        // <div className="w-8 h-8 flex items-center justify-center bg-pink-500 rounded-full">
-        //   <FaCheck className="text-white text-lg" />
-        // </div>
       );
     }
 
@@ -288,7 +231,7 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
       "text-white font-bold py-2 px-auto rounded-full transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm w-16";
 
     if (task.type === "CONNECT_WALLET") {
-      if (wallet) return null;
+      // if (wallet) return null;
       return (
         <motion.button
           whileTap={{ scale: 0.95 }}
@@ -343,32 +286,32 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
       }
     }
 
-    if (task.type === "ADD_TOKEN_TO_WALLET") {
-      if (task.status === "PENDING") {
-        return (
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            className={`${buttonBaseClasses} bg-blue-500 hover:bg-blue-600`}
-            onClick={handleAddTokenToWallet}
-            disabled={isProcessing}
-          >
-            {isProcessing ? <ClipLoader color="#fff" size={18} /> : "Go"}
-          </motion.button>
-        );
-      }
-      if (task.status === "STARTED") {
-        return (
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            className={`${buttonBaseClasses} bg-blue-500 hover:bg-blue-600`}
-            onClick={handleAction}
-            disabled={isProcessing}
-          >
-            {isProcessing ? <ClipLoader color="#fff" size={18} /> : "Go"}
-          </motion.button>
-        );
-      }
-    }
+    // if (task.type === "ADD_TOKEN_TO_WALLET") {
+    //   if (task.status === "PENDING") {
+    //     return (
+    //       <motion.button
+    //         whileTap={{ scale: 0.95 }}
+    //         className={`${buttonBaseClasses} bg-blue-500 hover:bg-blue-600`}
+    //         onClick={handleAddTokenToWallet}
+    //         disabled={isProcessing}
+    //       >
+    //         {isProcessing ? <ClipLoader color="#fff" size={18} /> : "Go"}
+    //       </motion.button>
+    //     );
+    //   }
+    //   if (task.status === "STARTED") {
+    //     return (
+    //       <motion.button
+    //         whileTap={{ scale: 0.95 }}
+    //         className={`${buttonBaseClasses} bg-yellow-500 hover:bg-yellow-600`}
+    //         onClick={handleAction}
+    //         disabled={isProcessing}
+    //       >
+    //         {isProcessing ? <ClipLoader color="#fff" size={18} /> : "Go"}
+    //       </motion.button>
+    //     );
+    //   }
+    // }
 
     let buttonText = "";
     let buttonClass = "bg-blue-500 hover:bg-blue-600";
@@ -389,6 +332,9 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
           onClick={
             task.type === "JOIN_TELEGRAM_CHANNEL" && task.status === "PENDING"
               ? handleJoinTelegramClaimReward
+              : task.type === "ADD_TOKEN_TO_WALLET" &&
+                task.status === "PENDING"
+              ? handleAddTokenToWallet
               : handleAction
           }
           disabled={isProcessing}
@@ -412,11 +358,10 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
   return (
     <motion.div variants={itemVariants} layout>
       <div className="bg-white/30 backdrop-blur-md border border-white/10 p-3 rounded-2xl flex justify-between items-center shadow-lg">
-        {/* بخش چپ: آیکون و اطلاعات */}
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 flex-shrink-0 bg-black/20 rounded-full flex items-center justify-center">
             <img
-              src={detectSocialNetwork(task)}
+              src={getTaskIconUrl(task)}
               alt="task icon"
               className="w-8 h-8"
             />
