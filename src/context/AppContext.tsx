@@ -18,6 +18,7 @@ interface LoginUserInterface {
   id: number;
   telegramId: string;
   firstName?: string;
+  username?: string;
   lastName?: string;
   photoUrl?: string;
   walletAddress: string | null;

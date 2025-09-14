@@ -1,7 +1,6 @@
 // src/components/BoostItem.tsx
 
 import React from "react";
-import { FaLock, FaCheckCircle, FaCoins } from "react-icons/fa";
 import { motion } from "framer-motion";
 import type { BoostLevelData } from "../../api";
 import { useTranslation } from "react-i18next";
@@ -19,20 +18,16 @@ const BoostItem: React.FC<BoostItemProps> = ({ boost, onUpgrade, isUpgrading }) 
   // تعیین وضعیت دکمه
   let buttonState: 'current' | 'unlocked' | 'locked' | 'upgradeable' = 'locked';
   let buttonText = t("locked");
-  let buttonIcon = <FaLock />;
 
   if (boost.isCurrent) {
     buttonState = 'current';
     buttonText = t("current");
-    buttonIcon = <FaCheckCircle className="text-green-400" />;
   } else if (boost.isUnlocked) {
     buttonState = 'unlocked';
     buttonText = t("unlocked");
-    buttonIcon = <FaCheckCircle className="text-gray-400" />;
   } else if (isNextLevel && boost.canAfford) {
     buttonState = 'upgradeable';
     buttonText = t("upgrade");
-    buttonIcon = <FaCoins />;
   }
 
   const buttonClasses = {

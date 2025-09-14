@@ -10,6 +10,7 @@ interface UserProfile {
   telegramId: number;
   username: string;
   firstName: string;
+  lastName: string;
   balance: string;
   bricsBalance: number;
   walletAddress?: string;
@@ -98,16 +99,14 @@ const ProfilePage = () => {
           alt="Profile"
           className="w-24 h-24 rounded-full border-4 border-yellow-400 object-cover"
         />
-        <h2 className="text-2xl font-bold mt-3">{profile.firstName}</h2>
-        <p className="text-gray-400">@{profile.username || "N/A"}</p>
+        <h2 className="text-2xl font-bold mt-3">{profile.firstName} {profile.lastName}</h2>
+        {profile.username != null && (
+          <p className="text-gray-400">@{profile.username}</p>
+        )}
       </div>
 
       <div className="bg-gray-800 rounded-lg p-6 space-y-4">
         {/* اینجا دیگه نیازی به نمایش اسم و یوزرنیم نیست چون بالا نشون دادیم */}
-        <div className="flex justify-between">
-          <span className="text-gray-400">Telegram ID:</span>
-          <span className="font-semibold">{profile.telegramId}</span>
-        </div>
         <div className="flex justify-between items-center text-xl">
           <span className="text-gray-400">Coin Balance:</span>
           <span className="font-bold text-green-400">

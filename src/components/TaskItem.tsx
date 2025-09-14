@@ -26,7 +26,7 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
   const { i18n } = useTranslation();
 
   const [isProcessing, setIsProcessing] = useState(false);
-  const { user, setUser } = useAppContext();
+  const { setUser } = useAppContext();
   const wallet = useTonWallet();
   const [tonConnectUI] = useTonConnectUI();
 
@@ -50,11 +50,11 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
             );
           }
           didConnectWallet.current = false;
-          setUser({
-            firstName: user?.firstName,
-            lastName: user?.lastName,
-            username: user?.username,
-            walletAddress: address,
+          setUser((prev: any) => {
+            return {
+              ...prev,
+              walletAddress: address,
+            };
           });
         } catch (error: any) {
           toast.error(
@@ -332,8 +332,7 @@ const TaskItem = ({ task, onTaskUpdate }: any) => {
           onClick={
             task.type === "JOIN_TELEGRAM_CHANNEL" && task.status === "PENDING"
               ? handleJoinTelegramClaimReward
-              : task.type === "ADD_TOKEN_TO_WALLET" &&
-                task.status === "PENDING"
+              : task.type === "ADD_TOKEN_TO_WALLET" && task.status === "PENDING"
               ? handleAddTokenToWallet
               : handleAction
           }
